@@ -1,0 +1,284 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{xcolor}
+
+% -----------------------------------------------------
+% Formatting mirrored from main.tex
+% -----------------------------------------------------
+
+% Variable: Lab Instructor
+\makeatletter \newcommand{\BvrSetLabInstructor}[1]{%
+  \gdef\Bvr@LabInstructor{#1}}
+% default
+\newcommand{\Bvr@LabInstructor}{Dr. Nisha Thakur}
+% public accessor
+\newcommand{\BvrLabInstructorValue}{\Bvr@LabInstructor}
+\makeatother
+
+% Add subtitle
+\usepackage{titling}
+% -- Set title bold
+\pretitle{\begin{center}\bfseries\fontsize{18bp}{18bp}\selectfont}
+\makeatletter
+\newcommand{\BvrSubtitle}[1]{%
+  \posttitle{%
+    \par\end{center}
+    \begin{center}\large#1\end{center}
+    \vskip 0.5em}%
+}
+\makeatother
+
+% Hints in the section title(s)
+\newcommand{\BvrHint}[1]{%
+  {\normalfont\normalsize\itshape\hfill #1}}
+
+% Full-width separator after each main project point.
+\newcommand{\BvrSectionRule}{%
+  \par\nobreak\vspace{0.25em}%
+  \noindent\rule{\linewidth}{0.4pt}%
+  \par\nobreak\vspace{0.4em}%
+}
+
+% -----------------------------------------------------
+
+\title{CVATS -- AI Powered ATS Resume Scanner and Job-Readiness Assistant}
+
+\BvrSetLabInstructor{Dr. Nisha Thakur}
+
+\BvrSubtitle{%
+  Project Proposal for UCS503P  \\
+  Submitted to: \BvrLabInstructorValue \\ \bfseries
+  Thapar Institute of Engineering and Technology%
+}
+
+\author{%
+  \begin{tabular}{cc}
+    Yashasvi Ranjan, 1024030509 &
+    Kamesh Yadav, 1024030508 \\
+    Taniksha, 1024030499 &
+    Anshika, 1024030499
+  \end{tabular}%
+}
+
+\date{August 25, 2026}
+
+\begin{document}
+\maketitle
+
+\section{Higher-order goal%
+}
+\BvrSectionRule
+This project aims to improve job readiness and career
+mobility for job seekers by removing ambiguity from the
+resume screening and interview preparation process. While
+applicant tracking systems (ATS) are widely used across
+industries, the immediate engineering objective is to
+translate explainable AI resume matching and preparation
+into a measurable, deployable software solution.
+
+\section{Time-to-value %
+}
+\BvrSectionRule
+\begin{itemize}[leftmargin=0.7cm]
+    \item We will deliver meaningful increments quickly by prototyping the core parsing and ATS match scoring workflow, validating it with sample candidate resumes within a short iteration window.
+    \item We will prioritize fast feedback over perfection by using weekly iterations (and targeting automated testing early) to continuously integrate gap analysis, resume enhancement, and mock interview features.
+    \item Success is defined by what can be delivered and measured in the first iteration (explainable match score), then expanded based on user feedback.
+\end{itemize}
+
+\section{Problem Statement}
+\BvrSectionRule
+Most job seekers today apply through Applicant Tracking
+Systems (ATS) without any real visibility into how their
+resume is actually being read by the software or how closely
+it matches the specific role they are applying for. Common
+pain points include:
+\begin{itemize}[leftmargin=0.7cm]
+    \item \textbf{Terminology mismatch:} Candidates may be well qualified on paper, yet get filtered out simply because their resume uses different terminology than the job description or omits required keywords.
+    \item \textbf{Generic scoring:} Freely available ``resume checker'' tools stop at giving an opaque generic score or basic formatting tips without explaining the score or tying feedback to a specific job description.
+    \item \textbf{Lack of actionable gap analysis:} Existing scanners answer ``is my resume ATS-friendly?'' but not ``how well do I match this particular job, what is missing, and how do I close that gap?''
+    \item \textbf{Disconnected post-shortlisting preparation:} Candidates prepare for interviews with generic question banks that have no connection to the role or their own background.
+\end{itemize}
+
+\textbf{Why this matters now (contextual relevance):} In a
+competitive job market with automated recruitment filters,
+providing explainable matching, non-fabricating resume
+enhancement, and role-specific mock interviews significantly
+reduces preparation friction and candidate drop-off.
+
+\section{Proposed Solution %
+}
+\BvrSectionRule
+\subsection{Overview}
+Build a \textbf{web-based} ``AI-Powered ATS Resume Scanner
+and Job Application Assistant'' with the following
+components:
+\begin{itemize}[leftmargin=0.7cm]
+    \item \textbf{Resume \& JD parsing portal:} Users upload PDF/DOCX resumes and paste target job descriptions.
+    \item \textbf{Explainable ATS match engine:} Computes category-wise scores (skills, experience, keywords, education).
+    \item \textbf{Gap analysis \& recommendation module:} Separates ``things to improve'' from ``things to learn/add''.
+    \item \textbf{AI resume enhancement module:} Rewrites bullet points for clarity and keyword alignment without fabricating experience.
+    \item \textbf{Role-specific mock interview system:} Conducts AI interview sessions based on the resume and JD, generating an actionable feedback report.
+\end{itemize}
+
+\subsection{Core workflow}
+\begin{enumerate}[leftmargin=0.7cm]
+    \item Candidate uploads resume (PDF/DOCX) and inputs a target job description.
+    \item System parses sections and performs hybrid matching (keyword matching + semantic embeddings) to generate an explainable match score with category breakdowns.
+    \item System presents gap analysis: weak content to improve vs. missing skills to learn.
+    \item Candidate generates an enhanced resume version with rewritten bullet points for review.
+    \item Candidate initiates a role-specific mock interview session, receives real-time questions, submits answers, and views a final interview performance report.
+\end{enumerate}
+
+\subsection{Operational constraints for an educational, tier-2/3 setting}
+\begin{itemize}[leftmargin=0.7cm]
+    \item Keep the solution usable on low-to-mid range devices via responsive web design (React/Next.js).
+    \item Avoid dependence on complex custom ML models; focus on practical LLM pipeline design, prompt engineering, and system correctness.
+    \item Design for deployability using common cloud web hosting and managed relational databases (PostgreSQL/MySQL).
+\end{itemize}
+
+\section{Solution Approach %
+}
+\BvrSectionRule
+This is an applied engineering project centered on a robust
+LLM application pipeline rather than novel algorithm research.
+
+\subsection{Duplicate/quality assistance %
+}
+Resume-JD matching and gap identification will be
+engineering-guided:
+\begin{itemize}[leftmargin=0.7cm]
+    \item Normalize extracted text across standard sections (Skills, Experience, Education, Projects).
+    \item Use a hybrid matching approach (keyword extraction combined with LLM semantic embeddings) to break down sub-scores.
+    \item Apply strict prompt constraints and validation checks during resume enhancement to guarantee zero fabrication of employers, tools, or metrics.
+\end{itemize}
+
+\subsection{Web architecture %
+}
+A standard 3-tier web architecture:
+\begin{itemize}[leftmargin=0.7cm]
+    \item \textbf{Frontend:} React / Next.js responsive UI for resume upload, analysis dashboard, bullet rewriter, and mock interview interface.
+    \item \textbf{Backend API:} Node.js / Express.js (or Python FastAPI) orchestrating text extraction, LLM API calls, scoring logic, and session persistence.
+    \item \textbf{Database:} Relational database (PostgreSQL/MySQL) storing user profiles, uploaded resumes, JDs, analysis records, and interview logs.
+\end{itemize}
+
+\subsection{Automated testing and fast delivery enabler}
+Automated testing will be used to:
+\begin{itemize}[leftmargin=0.7cm]
+    \item Automatically execute unit tests for parsing, score calculations, and prompt template validation.
+    \item Produce repeatable build artifacts for deployment to staging environments.
+    \item Enable safe and frequent releases of incremental pipeline modules.
+\end{itemize}
+
+\section{Evaluation Criterion %
+}
+\BvrSectionRule
+We define success using measurable metrics tied to matching
+explainability and user preparation efficiency.
+
+\subsection{Primary evaluation metric}
+\textbf{Match Score Explainability \& Accuracy:} Consistency
+of category-wise sub-scores (skills, keywords, experience)
+when evaluated against manually annotated sample resume-JD
+pairs.
+\begin{itemize}[leftmargin=0.7cm]
+    \item Target: match score correlation $\ge$ 85\% with human recruiter assessments on test benchmark.
+    \item Attribution: measured by comparing system category sub-scores against expert evaluation rubrics.
+\end{itemize}
+
+\subsection{Secondary evaluation metrics}
+\begin{itemize}[leftmargin=0.7cm]
+    \item \textbf{Zero Fabrication Rate:} 100\% adherence in the resume enhancement module (no invented companies, titles, or metrics).
+    \item \textbf{Mock Interview Relevance:} rating of AI-generated questions against the candidate's actual resume and JD gaps.
+    \item \textbf{Processing Latency:} end-to-end analysis generated in $\le$ 10 seconds.
+    \item \textbf{Reliability:} system availability $\ge$ 99\% during user testing iterations.
+\end{itemize}
+
+\subsection{Pilot validation plan %
+}
+\begin{itemize}[leftmargin=0.7cm]
+    \item Recruit 10--20 student job seekers and test against diverse candidate resumes and job descriptions.
+    \item Compare preparation outcomes before and after system usage through candidate feedback surveys and mock interview score progression.
+\end{itemize}
+
+\section{Scalability %
+}
+\BvrSectionRule
+The system is designed to scale efficiently across both
+technical and operational dimensions.
+
+\begin{enumerate}[leftmargin=0.7cm]
+    \item \textbf{Scalable (theoretically):} The system supports growth in concurrent users and large resume document sets by:
+    \begin{itemize}[leftmargin=0.7cm]
+        \item decoupling frontend and backend services via stateless REST APIs,
+        \item caching analysis results for repeated resume-JD evaluations,
+        \item asynchronous background processing for heavy LLM operations.
+    \end{itemize}
+
+    \item \textbf{Operationally deployable (practically):} The platform deploys seamlessly using standard Web/Cloud infrastructure:
+    \begin{itemize}[leftmargin=0.7cm]
+        \item managed relational database instances,
+        \item platform-as-a-service (PaaS) hosting for frontend and API backend,
+        \item automated deployment scripts for rapid staging and deployment.
+    \end{itemize}
+\end{enumerate}
+
+\section{Engine availability heuristic}
+\BvrSectionRule
+A mature set of software engines and AI services is
+available to implement this web project:
+\begin{itemize}[leftmargin=0.7cm]
+    \item Text extraction engines for PDF and DOCX documents (pdf-parse, mammoth).
+    \item LLM APIs (OpenAI / Gemini / Anthropic) for parsing, gap analysis, bullet rewriting, and mock interviews.
+    \item Modern web framework (React / Next.js, Node.js / Express.js / FastAPI).
+    \item Managed relational database (PostgreSQL / MySQL).
+    \item Automated test runner and build tools (GitHub Actions / Jest).
+\end{itemize}
+We leverage these mature tools to focus on system integration,
+prompt engineering, user experience, and evaluation rather
+than reinventing core infrastructure.
+
+\section{Project scope and deliverables %
+}
+\BvrSectionRule
+\subsection{Initial deliverable %
+}
+\begin{itemize}[leftmargin=0.7cm]
+    \item Resume (PDF/DOCX) and Job Description text ingestion portal.
+    \item Resume \& JD parsing engine with section structuring.
+    \item Explainable ATS match score engine with category-wise breakdown dashboard.
+    \item Basic automated test suite for parsing and scoring accuracy.
+    \item Single-command deployment to staging.
+\end{itemize}
+
+\subsection{Subsequent deliverables}
+\begin{itemize}[leftmargin=0.7cm]
+    \item Gap analysis module producing ``Things to Improve'' vs. ``Things to Learn''.
+    \item AI Resume Enhancement module with before/after comparison interface and strict validation.
+    \item Role-specific AI Mock Interview module with answer evaluation and feedback report.
+    \item Admin and candidate history dashboard for tracking progress across multiple applications.
+\end{itemize}
+
+\section{Risks and mitigations}
+\BvrSectionRule
+\begin{itemize}[leftmargin=0.7cm]
+    \item \textbf{Parsing accuracy risk:} Resumes vary widely in format; text extraction may misinterpret complex layouts. Mitigation: test against diverse sample templates early and provide manual correction fields.
+    \item \textbf{AI fabrication risk:} LLM rewriter could hallucinate experience. Mitigation: constrain prompts strictly and enforce a validation check flagging any unauthorized terms.
+    \item \textbf{API cost/availability risk:} Third-party LLM rate limits or costs. Mitigation: implement caching for repeated calls and fall back to lighter/open models during development.
+    \item \textbf{Scope risk:} Combining 8 features in one semester. Mitigation: maintain a clean single-database architecture and reserve buffer weeks for refinement.
+\end{itemize}
+
+\section{Summary}
+\BvrSectionRule
+This project proposes a deployable web platform for an
+AI-Powered ATS Resume Scanner and Job-Readiness Assistant. It
+adheres to all course criteria by prioritizing time-to-value
+through rapid iterations, employing automated testing for
+reliable delivery, and defining measurable, explainable
+evaluation metrics. The platform connects resume matching,
+gap analysis, bullet enhancement, and role-specific mock
+interviewing into a single unified workflow for job seekers.
+
+\end{document}
