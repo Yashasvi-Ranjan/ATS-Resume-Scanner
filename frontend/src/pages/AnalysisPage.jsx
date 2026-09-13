@@ -1,16 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  FileSearch,
   Sparkles,
-  Briefcase,
-  Layers,
   ArrowRight,
   RotateCcw,
   CheckCircle,
-  FileText,
-  HelpCircle,
-  Zap
+  FileText
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { mockApi } from '../services/mockApi';
@@ -40,7 +35,7 @@ export default function AnalysisPage() {
     const preset = presetJobDescriptions.find((p) => p.id === presetId);
     if (preset) {
       setJobDescription(preset.content);
-      showToast(`Loaded "${preset.title}" job description.`, 'info');
+      showToast(`Loaded sample "${preset.title}" job description.`, 'info');
     }
   };
 
@@ -86,41 +81,37 @@ export default function AnalysisPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-300">
+    <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="text-center sm:text-left space-y-2">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-semibold">
-          <Zap className="w-3.5 h-3.5" />
-          <span>Two-Step ATS Match Scanner</span>
-        </div>
-        <h2 className="text-2xl lg:text-3xl font-extrabold text-white font-display">
-          Resume + Job Description Analysis
+      <div className="space-y-1">
+        <h2 className="text-xl lg:text-2xl font-bold text-slate-900 font-display">
+          Resume & Job Description Analysis
         </h2>
-        <p className="text-sm text-slate-400">
-          Upload your resume and provide target job requirements to generate an explainable, multi-factor match score and skill gap breakdown.
+        <p className="text-xs sm:text-sm text-slate-600">
+          Upload your resume and paste the target job description to generate an explainable ATS match score.
         </p>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-5">
         {/* Step 1: Resume Upload */}
-        <div className="glass-card rounded-2xl p-6 lg:p-7 border border-slate-800">
-          <div className="flex items-center justify-between pb-4 mb-5 border-b border-slate-800">
-            <div className="flex items-center gap-3">
-              <span className="w-7 h-7 rounded-full bg-brand-500 text-white flex items-center justify-center text-xs font-bold font-display">
+        <div className="bg-white rounded-xl p-5 lg:p-6 border border-slate-200 shadow-card">
+          <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold font-display">
                 1
               </span>
               <div>
-                <h3 className="text-base font-bold text-white">
+                <h3 className="text-sm font-bold text-slate-900">
                   Upload Candidate Resume
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   Select or drag your PDF/DOCX resume file
                 </p>
               </div>
             </div>
             {resumeFile && (
-              <span className="text-xs text-emerald-400 font-medium flex items-center gap-1.5">
-                <CheckCircle className="w-4 h-4" /> Ready to parse
+              <span className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-medium flex items-center gap-1">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> Ready to scan
               </span>
             )}
           </div>
@@ -140,29 +131,29 @@ export default function AnalysisPage() {
         </div>
 
         {/* Step 2: Job Description */}
-        <div className="glass-card rounded-2xl p-6 lg:p-7 border border-slate-800">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-5 border-b border-slate-800 gap-3">
-            <div className="flex items-center gap-3">
-              <span className="w-7 h-7 rounded-full bg-brand-500 text-white flex items-center justify-center text-xs font-bold font-display">
+        <div className="bg-white rounded-xl p-5 lg:p-6 border border-slate-200 shadow-card">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 mb-4 border-b border-slate-100 gap-2.5">
+            <div className="flex items-center gap-2.5">
+              <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold font-display">
                 2
               </span>
               <div>
-                <h3 className="text-base font-bold text-white">
-                  Paste Job Description
+                <h3 className="text-sm font-bold text-slate-900">
+                  Target Job Description
                 </h3>
-                <p className="text-xs text-slate-400">
-                  Provide the target job posting to compare against
+                <p className="text-xs text-slate-500">
+                  Paste the requirements and responsibilities for the target position
                 </p>
               </div>
             </div>
 
             {/* Presets selector */}
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400">Sample JD:</span>
+              <span className="text-xs text-slate-500">Sample JD:</span>
               <select
                 value={selectedPreset}
                 onChange={(e) => handlePresetChange(e.target.value)}
-                className="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 focus:border-brand-500 focus:outline-none"
+                className="bg-white border border-slate-300 text-slate-800 text-xs rounded-lg px-2.5 py-1.5 focus:border-blue-500 focus:outline-none"
               >
                 {presetJobDescriptions.map((preset) => (
                   <option key={preset.id} value={preset.id}>
@@ -176,24 +167,24 @@ export default function AnalysisPage() {
           {/* Text Area */}
           <div className="space-y-3">
             <textarea
-              rows={9}
+              rows={8}
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
               placeholder="Paste complete job description here, including responsibilities, required skills, and qualification requirements..."
-              className="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl p-4 text-xs lg:text-sm text-slate-200 placeholder:text-slate-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none font-mono leading-relaxed"
+              className="w-full bg-white border border-slate-300 rounded-lg p-3.5 text-xs lg:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none font-mono leading-relaxed"
             />
 
-            <div className="flex items-center justify-between text-xs text-slate-400">
+            <div className="flex items-center justify-between text-xs text-slate-500">
               <div className="flex items-center gap-2">
-                <span>Character Count: <strong className="text-slate-200">{jobDescription.length}</strong></span>
+                <span>Characters: <strong className="text-slate-800">{jobDescription.length}</strong></span>
                 {jobDescription.length < 30 && (
-                  <span className="text-rose-400 text-[11px]">(Minimum 30 characters required)</span>
+                  <span className="text-rose-600 text-[11px]">(Minimum 30 characters required)</span>
                 )}
               </div>
               <button
                 type="button"
                 onClick={handleClearJD}
-                className="text-slate-400 hover:text-rose-400 transition-colors flex items-center gap-1"
+                className="text-slate-500 hover:text-rose-600 transition-colors flex items-center gap-1 cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Clear</span>
@@ -203,14 +194,13 @@ export default function AnalysisPage() {
         </div>
 
         {/* Submit Analyze Button */}
-        <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-2">
+        <div className="flex items-center justify-end gap-3 pt-1">
           <button
             type="button"
             onClick={handleStartAnalysis}
             disabled={isLoading}
-            className="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-bold text-sm shadow-xl shadow-brand-500/25 flex items-center justify-center gap-2.5 transition-all active:scale-95 disabled:opacity-50"
+            className="w-full sm:w-auto px-7 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-subtle flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
           >
-            <Sparkles className="w-4 h-4" />
             <span>Analyze Resume</span>
             <ArrowRight className="w-4 h-4" />
           </button>

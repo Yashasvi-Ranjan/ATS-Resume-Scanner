@@ -4,16 +4,11 @@ import {
   Bot,
   Play,
   Clock,
-  CheckCircle2,
-  AlertCircle,
   HelpCircle,
-  ArrowRight,
   Sparkles,
-  RotateCcw,
   SkipForward,
   Send,
   Loader2,
-  FileCheck,
   ChevronLeft
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -90,12 +85,12 @@ export default function MockInterviewPage() {
         [currentQuestion.id]: currentAnswer
       }));
 
-      showToast(`Question ${currentQuestionIndex + 1} answer submitted successfully!`, 'success');
+      showToast(`Question ${currentQuestionIndex + 1} answer submitted!`, 'success');
 
       if (currentQuestionIndex + 1 < totalQuestions) {
         setCurrentQuestionIndex((prev) => prev + 1);
       } else {
-        showToast('All interview questions completed! Evaluating results...', 'success');
+        showToast('All interview questions completed! Evaluating...', 'success');
         navigate('/mock-interview/results');
       }
     } catch (err) {
@@ -115,80 +110,78 @@ export default function MockInterviewPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-300">
+    <div className="max-w-3xl mx-auto space-y-6">
       {!hasStarted ? (
         /* Start Screen */
-        <div className="glass-card rounded-2xl p-8 lg:p-12 border border-slate-800 text-center space-y-8 relative overflow-hidden">
-          <div className="absolute top-0 right-1/2 translate-x-1/2 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
-
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white mx-auto shadow-xl shadow-brand-500/25">
-            <Bot className="w-10 h-10" />
+        <div className="bg-white rounded-xl p-8 lg:p-10 border border-slate-200 shadow-card text-center space-y-6">
+          <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center mx-auto">
+            <Bot className="w-7 h-7" />
           </div>
 
-          <div className="space-y-3 max-w-xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-semibold">
-              <span>Interactive Technical Evaluation</span>
+          <div className="space-y-2 max-w-lg mx-auto">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold">
+              <span>Technical Role Practice</span>
             </div>
-            <h2 className="text-3xl font-extrabold text-white font-display">
-              Mock Interview — Frontend Developer
+            <h2 className="text-xl lg:text-2xl font-bold text-slate-900 font-display">
+              Mock Technical Interview — Frontend Developer
             </h2>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Test your technical knowledge, communication clarity, and problem-solving readiness against real interview questions tailored for React & Frontend engineering roles.
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              Practice role-specific technical questions tailored for React and frontend engineering, evaluated on technical accuracy, structure, and communication clarity.
             </p>
           </div>
 
           {/* Key metadata tiles */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mx-auto text-left">
-            <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
-              <span className="text-xs text-slate-400 block">Total Questions</span>
-              <strong className="text-lg text-white font-display">8 Questions</strong>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-md mx-auto text-left">
+            <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200">
+              <span className="text-[11px] text-slate-500 block">Total Questions</span>
+              <strong className="text-sm text-slate-900 font-display">8 Questions</strong>
             </div>
-            <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
-              <span className="text-xs text-slate-400 block">Question Types</span>
-              <strong className="text-lg text-white font-display">Tech + Behavioral</strong>
+            <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200">
+              <span className="text-[11px] text-slate-500 block">Category</span>
+              <strong className="text-sm text-slate-900 font-display">Tech + Architecture</strong>
             </div>
-            <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
-              <span className="text-xs text-slate-400 block">Estimated Time</span>
-              <strong className="text-lg text-white font-display">15 - 20 Mins</strong>
+            <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200">
+              <span className="text-[11px] text-slate-500 block">Estimated Time</span>
+              <strong className="text-sm text-slate-900 font-display">15 - 20 Mins</strong>
             </div>
           </div>
 
-          <div className="pt-4">
+          <div className="pt-2">
             <button
               onClick={() => {
                 setHasStarted(true);
                 setCurrentQuestionIndex(0);
               }}
-              className="px-8 py-4 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-bold text-base shadow-xl shadow-brand-500/25 flex items-center justify-center gap-3 mx-auto transition-all active:scale-95"
+              className="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-subtle flex items-center justify-center gap-2 mx-auto transition-colors cursor-pointer"
             >
-              <Play className="w-5 h-5 fill-current" />
-              <span>Start Interview</span>
+              <Play className="w-4 h-4 fill-current" />
+              <span>Start Interview Session</span>
             </button>
           </div>
         </div>
       ) : (
-        /* Active Interview Runner Screen */
-        <div className="space-y-6">
+        /* Active Interview Screen */
+        <div className="space-y-4">
           {/* Top Progress & Timer Bar */}
-          <div className="glass-card rounded-2xl p-5 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex-1 space-y-1.5">
+          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex-1 space-y-1">
               <div className="flex items-center justify-between text-xs font-semibold">
-                <span className="text-brand-400 uppercase tracking-wider">
+                <span className="text-blue-700 uppercase tracking-wider text-[11px]">
                   Question {currentQuestionIndex + 1} of {totalQuestions}
                 </span>
-                <span className="text-slate-400">
+                <span className="text-slate-500 font-normal">
                   {currentQuestion.type} Category
                 </span>
               </div>
-              <ProgressBar value={progressPercent} showPercentage={false} height="h-2" />
+              <ProgressBar value={progressPercent} showPercentage={false} height="h-1.5" />
             </div>
 
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               <div
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg border font-mono text-xs font-bold ${
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-md border font-mono text-xs font-bold ${
                   timerSeconds < 30
-                    ? 'bg-rose-500/10 text-rose-400 border-rose-500/30 animate-pulse'
-                    : 'bg-slate-900 text-slate-300 border-slate-700'
+                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                    : 'bg-slate-50 text-slate-700 border-slate-200'
                 }`}
               >
                 <Clock className="w-3.5 h-3.5" />
@@ -198,43 +191,43 @@ export default function MockInterviewPage() {
           </div>
 
           {/* Question Card */}
-          <div className="glass-card rounded-2xl p-6 lg:p-8 border border-slate-800 space-y-6">
-            <div className="space-y-2">
+          <div className="bg-white rounded-xl p-5 lg:p-7 border border-slate-200 shadow-card space-y-5">
+            <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                   {currentQuestion.title}
                 </span>
                 <button
                   onClick={() => setShowHint(!showHint)}
-                  className="text-xs text-brand-400 hover:text-brand-300 flex items-center gap-1 font-medium"
+                  className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 font-medium cursor-pointer"
                 >
                   <HelpCircle className="w-3.5 h-3.5" />
-                  <span>{showHint ? 'Hide Hint' : 'Show Answer Hint'}</span>
+                  <span>{showHint ? 'Hide Guidance' : 'Show Guidance'}</span>
                 </button>
               </div>
-              <h3 className="text-xl lg:text-2xl font-bold text-white font-display leading-snug">
+              <h3 className="text-base lg:text-lg font-bold text-slate-900 font-display leading-snug">
                 "{currentQuestion.question}"
               </h3>
             </div>
 
             {/* Hint Callout */}
             {showHint && (
-              <div className="p-4 rounded-xl bg-brand-950/30 border border-brand-500/30 text-xs text-brand-300 space-y-1 animate-in fade-in">
-                <strong className="font-semibold text-white">💡 Evaluation Guide:</strong>
+              <div className="p-3.5 rounded-lg bg-blue-50 border border-blue-100 text-xs text-slate-700 space-y-1">
+                <strong className="font-semibold text-blue-900">Evaluation Guide:</strong>
                 <p className="leading-relaxed">{currentQuestion.hint}</p>
               </div>
             )}
 
             {/* Candidate Answer Textarea */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-slate-400">
-                <label htmlFor="answer-input" className="font-medium text-slate-300">
-                  Your Answer:
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs text-slate-600">
+                <label htmlFor="answer-input" className="font-medium text-slate-800">
+                  Your Response:
                 </label>
                 <button
                   onClick={handleFillSample}
                   type="button"
-                  className="text-[11px] text-brand-400 hover:underline flex items-center gap-1 font-semibold"
+                  className="text-[11px] text-blue-600 hover:underline flex items-center gap-1 font-semibold cursor-pointer"
                 >
                   <Sparkles className="w-3 h-3" /> Auto-fill Sample Answer
                 </button>
@@ -245,35 +238,35 @@ export default function MockInterviewPage() {
                 rows={7}
                 value={currentAnswer}
                 onChange={(e) => setCurrentAnswer(e.target.value)}
-                placeholder="Type your structured answer here. Speak to your practical experience, best practices, and trade-offs..."
-                className="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl p-4 text-xs lg:text-sm text-slate-200 placeholder:text-slate-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none leading-relaxed font-sans"
+                placeholder="Type your structured answer here. Include relevant details on trade-offs, practical experiences, and architectural rationale..."
+                className="w-full bg-white border border-slate-300 rounded-lg p-3 text-xs lg:text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none leading-relaxed font-sans"
               />
 
-              <div className="flex items-center justify-between text-xs text-slate-500">
-                <span>{currentAnswer.length} characters typed</span>
-                <span>Press Submit when you are finished</span>
+              <div className="flex items-center justify-between text-[11px] text-slate-400">
+                <span>{currentAnswer.length} characters</span>
+                <span>Click Submit Answer when complete</span>
               </div>
             </div>
 
             {/* Action Bar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-800">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100">
               <button
                 type="button"
                 onClick={handleSkipQuestion}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl glass-card hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-medium border border-slate-700 flex items-center justify-center gap-2 transition-colors"
+                className="w-full sm:w-auto px-3.5 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-600 text-xs font-medium border border-slate-300 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
-                <SkipForward className="w-4 h-4" />
+                <SkipForward className="w-3.5 h-3.5" />
                 <span>Skip Question</span>
               </button>
 
-              <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                 {currentQuestionIndex > 0 && (
                   <button
                     type="button"
                     onClick={() => setCurrentQuestionIndex((prev) => prev - 1)}
-                    className="px-4 py-2.5 rounded-xl glass-card hover:bg-slate-800 text-slate-300 text-xs font-medium border border-slate-700 flex items-center gap-1"
+                    className="px-3 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium border border-slate-300 flex items-center gap-1 cursor-pointer"
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft className="w-3.5 h-3.5" />
                     <span>Previous</span>
                   </button>
                 )}
@@ -282,12 +275,12 @@ export default function MockInterviewPage() {
                   type="button"
                   onClick={handleSubmitAnswer}
                   disabled={isSubmitting}
-                  className="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-lg shadow-brand-500/25 flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+                  className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-subtle flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmitting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <Send className="w-4 h-4" />
+                    <Send className="w-3.5 h-3.5" />
                   )}
                   <span>
                     {currentQuestionIndex + 1 === totalQuestions

@@ -10,47 +10,47 @@ export default function ToastContainer() {
   const getIcon = (type) => {
     switch (type) {
       case 'success':
-        return <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />;
+        return <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />;
       case 'warning':
-        return <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />;
+        return <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />;
       case 'error':
-        return <XCircle className="w-5 h-5 text-rose-400 shrink-0" />;
+        return <XCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />;
       default:
-        return <Info className="w-5 h-5 text-brand-400 shrink-0" />;
+        return <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />;
     }
   };
 
-  const getBorderColor = (type) => {
+  const getStyle = (type) => {
     switch (type) {
       case 'success':
-        return 'border-emerald-500/40 bg-slate-900/95';
+        return 'border-emerald-200 bg-white text-slate-800';
       case 'warning':
-        return 'border-amber-500/40 bg-slate-900/95';
+        return 'border-amber-200 bg-white text-slate-800';
       case 'error':
-        return 'border-rose-500/40 bg-slate-900/95';
+        return 'border-rose-200 bg-white text-slate-800';
       default:
-        return 'border-brand-500/40 bg-slate-900/95';
+        return 'border-blue-200 bg-white text-slate-800';
     }
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none">
+    <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none">
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className={`pointer-events-auto flex items-start gap-3 p-4 rounded-xl border shadow-2xl backdrop-blur-md transition-all duration-300 transform translate-y-0 ${getBorderColor(
+          className={`pointer-events-auto flex items-start gap-3 p-3.5 rounded-xl border shadow-card transition-all duration-200 ${getStyle(
             toast.type
           )}`}
         >
           {getIcon(toast.type)}
-          <div className="flex-1 text-xs text-slate-200 leading-relaxed font-medium">
+          <div className="flex-1 text-xs text-slate-700 leading-relaxed font-medium">
             {toast.message}
           </div>
           <button
             onClick={() => removeToast(toast.id)}
-            className="text-slate-400 hover:text-slate-200 transition-colors p-0.5"
+            className="text-slate-400 hover:text-slate-600 transition-colors p-0.5"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       ))}

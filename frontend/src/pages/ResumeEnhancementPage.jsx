@@ -7,12 +7,8 @@ import {
   X,
   RotateCw,
   Download,
-  FileCheck2,
-  AlertCircle,
-  ChevronRight,
   ArrowRight,
   Bot,
-  Layers,
   Copy,
   CheckCheck
 } from 'lucide-react';
@@ -29,7 +25,6 @@ export default function ResumeEnhancementPage() {
   } = useApp();
 
   const [activeSectionId, setActiveSectionId] = useState('summary');
-  const [viewMode, setViewMode] = useState('split'); // 'split', 'original', 'enhanced'
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
 
@@ -39,7 +34,7 @@ export default function ResumeEnhancementPage() {
     setIsRegenerating(true);
     try {
       await mockApi.regenerateSection(sectionId);
-      showToast('Regenerated section with targeted keywords and metrics.', 'success');
+      showToast('Regenerated phrasing with targeted keywords and metrics.', 'success');
     } catch (err) {
       showToast('Failed to regenerate section.', 'error');
     } finally {
@@ -50,93 +45,93 @@ export default function ResumeEnhancementPage() {
   const handleCopyText = (text, id) => {
     navigator.clipboard?.writeText(text);
     setCopiedId(id);
-    showToast('Copied enhanced text to clipboard!', 'info');
+    showToast('Copied text to clipboard.', 'info');
     setTimeout(() => setCopiedId(null), 2000);
   };
 
   const handleDownloadResume = () => {
-    showToast('Preparing your enhanced ATS-optimized PDF resume...', 'info');
+    showToast('Preparing your enhanced ATS-optimized resume...', 'info');
     setTimeout(() => {
-      showToast('Enhanced Resume (Sarah_Johnson_Enhanced.pdf) generated & downloaded!', 'success');
-    }, 1200);
+      showToast('Enhanced Resume (Sarah_Johnson_Enhanced.pdf) generated!', 'success');
+    }, 1000);
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-6">
       {/* Header Banner */}
-      <div className="glass-card rounded-2xl p-6 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white rounded-xl p-5 lg:p-6 border border-slate-200 shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-brand-400 uppercase tracking-wider mb-1">
-            <Sparkles className="w-4 h-4" />
-            <span>AI Resume Optimization & Verification</span>
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-600 uppercase tracking-wider mb-0.5">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Grounded AI Resume Enhancement</span>
           </div>
-          <h2 className="text-xl lg:text-2xl font-extrabold text-white font-display">
-            Resume Enhancement
+          <h2 className="text-lg lg:text-xl font-bold text-slate-900 font-display">
+            Resume Enhancement & Phrasing Optimization
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Target Role: <strong className="text-slate-200">{enhancementData.targetRole}</strong> • Candidate: <strong className="text-slate-200">{enhancementData.candidateName}</strong>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Target Role: <strong className="text-slate-800">{enhancementData.targetRole}</strong> • Candidate: <strong className="text-slate-800">{enhancementData.candidateName}</strong>
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={handleDownloadResume}
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-lg shadow-emerald-500/20 flex items-center gap-2 transition-all active:scale-95"
+            className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-subtle flex items-center gap-1.5 transition-colors"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-3.5 h-3.5" />
             <span>Download Enhanced Resume</span>
           </button>
           <button
             onClick={() => navigate('/mock-interview')}
-            className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-md shadow-brand-500/20 flex items-center gap-2 transition-all"
+            className="px-4 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold border border-slate-300 flex items-center gap-1.5 transition-colors"
           >
-            <Bot className="w-4 h-4" />
+            <Bot className="w-3.5 h-3.5 text-blue-600" />
             <span>Practice Interview</span>
           </button>
         </div>
       </div>
 
       {/* Mandatory No-Fabrication Trust Banner */}
-      <div className="p-4 rounded-xl bg-slate-900/90 border border-brand-500/40 flex items-start gap-3.5 shadow-sm">
-        <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-        <div className="text-xs space-y-1">
-          <span className="font-bold text-slate-100">
-            Strict No-Fabrication Principle
+      <div className="p-3.5 rounded-lg bg-blue-50 border border-blue-200 flex items-start gap-3">
+        <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+        <div className="text-xs space-y-0.5">
+          <span className="font-bold text-slate-900">
+            Strict No-Fabrication Policy
           </span>
-          <p className="text-slate-400 leading-relaxed">
+          <p className="text-slate-600 leading-relaxed">
             {enhancementData.noticeText}
           </p>
         </div>
       </div>
 
       {/* Section Switcher Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-800">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-slate-200">
         {enhancementData.sections.map((sec) => (
           <button
             key={sec.id}
             onClick={() => setActiveSectionId(sec.id)}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 cursor-pointer ${
               activeSectionId === sec.id
-                ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'bg-blue-600 text-white shadow-subtle'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             <span>{sec.name}</span>
-            {sec.status === 'accepted' && <Check className="w-3.5 h-3.5 text-emerald-300" />}
-            {sec.status === 'rejected' && <X className="w-3.5 h-3.5 text-rose-300" />}
+            {sec.status === 'accepted' && <Check className="w-3 h-3 text-emerald-300" />}
+            {sec.status === 'rejected' && <X className="w-3 h-3 text-rose-300" />}
           </button>
         ))}
       </div>
 
       {/* Main Diff Comparison Workspace */}
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Section Header Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div>
-            <h3 className="text-lg font-bold text-white font-display">
+            <h3 className="text-sm font-bold text-slate-900 font-display">
               {activeSection.name}
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-500">
               Compare original phrasing with ATS-optimized, high-impact phrasing
             </p>
           </div>
@@ -145,9 +140,9 @@ export default function ResumeEnhancementPage() {
             <button
               onClick={() => handleRegenerate(activeSection.id)}
               disabled={isRegenerating}
-              className="px-3 py-1.5 rounded-lg glass-card hover:bg-slate-800 text-slate-300 text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition-colors disabled:opacity-50"
+              className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium border border-slate-300 flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
             >
-              <RotateCw className={`w-3.5 h-3.5 ${isRegenerating ? 'animate-spin text-brand-400' : ''}`} />
+              <RotateCw className={`w-3.5 h-3.5 ${isRegenerating ? 'animate-spin text-blue-600' : ''}`} />
               <span>Regenerate Phrasing</span>
             </button>
           </div>
@@ -156,71 +151,71 @@ export default function ResumeEnhancementPage() {
         {/* Multi-bullet vs Single Block Rendering */}
         {activeSection.items ? (
           /* Multi-bullet Experience / Projects */
-          <div className="space-y-4">
+          <div className="space-y-3.5">
             {activeSection.items.map((bullet, index) => (
               <div
                 key={bullet.id}
-                className="glass-card rounded-2xl p-5 border border-slate-800 space-y-4"
+                className="bg-white rounded-xl p-4 border border-slate-200 shadow-card space-y-3"
               >
-                <div className="flex items-center justify-between text-xs font-semibold text-slate-400 border-b border-slate-800/80 pb-2">
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-500 border-b border-slate-100 pb-2">
                   <span>Bullet Point #{index + 1}</span>
                   <div className="flex items-center gap-2">
                     {bullet.status === 'accepted' && (
-                      <span className="text-emerald-400 text-xs flex items-center gap-1">
-                        <Check className="w-3.5 h-3.5" /> Accepted
+                      <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1">
+                        <Check className="w-3 h-3 text-emerald-600" /> Accepted
                       </span>
                     )}
                     {bullet.status === 'rejected' && (
-                      <span className="text-rose-400 text-xs flex items-center gap-1">
-                        <X className="w-3.5 h-3.5" /> Rejected
+                      <span className="text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1">
+                        <X className="w-3 h-3 text-rose-600" /> Rejected
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
                   {/* Original */}
-                  <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                       Original Phrasing
                     </span>
-                    <p className="text-xs text-slate-300 leading-relaxed font-mono">
+                    <p className="text-xs text-slate-700 leading-relaxed font-mono">
                       "{bullet.original}"
                     </p>
                   </div>
 
                   {/* Enhanced */}
-                  <div className="p-4 rounded-xl bg-brand-950/20 border border-brand-500/30 space-y-2 relative">
+                  <div className="p-3 rounded-lg bg-blue-50/50 border border-blue-200 space-y-1 relative">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-brand-400 flex items-center gap-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 flex items-center gap-1">
                         <Sparkles className="w-3 h-3" /> Enhanced Impact (ATS Optimized)
                       </span>
                       <button
                         onClick={() => handleCopyText(bullet.enhanced, bullet.id)}
-                        className="text-slate-400 hover:text-brand-300 p-1"
+                        className="text-slate-400 hover:text-blue-600 p-0.5 cursor-pointer"
                         title="Copy text"
                       >
                         {copiedId === bullet.id ? (
-                          <CheckCheck className="w-3.5 h-3.5 text-emerald-400" />
+                          <CheckCheck className="w-3.5 h-3.5 text-emerald-600" />
                         ) : (
                           <Copy className="w-3.5 h-3.5" />
                         )}
                       </button>
                     </div>
-                    <p className="text-xs text-emerald-300 leading-relaxed font-medium">
+                    <p className="text-xs text-slate-900 leading-relaxed font-medium">
                       "{bullet.enhanced}"
                     </p>
                   </div>
                 </div>
 
                 {/* Accept / Reject actions */}
-                <div className="flex items-center justify-end gap-2 pt-2">
+                <div className="flex items-center justify-end gap-2 pt-1">
                   <button
                     onClick={() => updateBulletStatus(activeSection.id, bullet.id, 'rejected')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition-colors ${
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1 transition-colors cursor-pointer ${
                       bullet.status === 'rejected'
-                        ? 'bg-rose-500/20 border-rose-500/40 text-rose-300'
-                        : 'border-slate-700 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10'
+                        ? 'bg-rose-50 border-rose-200 text-rose-700 font-semibold'
+                        : 'border-slate-300 text-slate-600 hover:text-rose-700 hover:bg-rose-50'
                     }`}
                   >
                     <X className="w-3.5 h-3.5" />
@@ -228,14 +223,14 @@ export default function ResumeEnhancementPage() {
                   </button>
                   <button
                     onClick={() => updateBulletStatus(activeSection.id, bullet.id, 'accepted')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition-colors ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1 transition-colors cursor-pointer ${
                       bullet.status === 'accepted'
-                        ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
-                        : 'border-brand-500/40 bg-brand-500/10 text-brand-300 hover:bg-brand-500 hover:text-white'
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700 font-semibold'
+                        : 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700'
                     }`}
                   >
                     <Check className="w-3.5 h-3.5" />
-                    <span>Accept Change</span>
+                    <span>Accept Suggestion</span>
                   </button>
                 </div>
               </div>
@@ -243,39 +238,37 @@ export default function ResumeEnhancementPage() {
           </div>
         ) : (
           /* Single block (Summary, Skills, Education, Certifications) */
-          <div className="glass-card rounded-2xl p-6 border border-slate-800 space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-card space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Original block */}
-              <div className="p-5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                    Original Resume Text
-                  </span>
-                </div>
-                <div className="text-xs text-slate-300 whitespace-pre-line leading-relaxed font-mono bg-slate-950/60 p-3 rounded-lg border border-slate-900">
+              <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  Original Resume Text
+                </span>
+                <div className="text-xs text-slate-700 whitespace-pre-line leading-relaxed font-mono">
                   {activeSection.original}
                 </div>
               </div>
 
               {/* Enhanced block */}
-              <div className="p-5 rounded-xl bg-brand-950/20 border border-brand-500/30 space-y-3 relative">
+              <div className="p-4 rounded-lg bg-blue-50/50 border border-blue-200 space-y-2 relative">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-brand-400 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5" /> Enhanced Phrasing
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" /> Enhanced Phrasing
                   </span>
                   <button
                     onClick={() => handleCopyText(activeSection.enhanced, activeSection.id)}
-                    className="text-slate-400 hover:text-brand-300 p-1"
+                    className="text-slate-400 hover:text-blue-600 p-0.5 cursor-pointer"
                     title="Copy text"
                   >
                     {copiedId === activeSection.id ? (
-                      <CheckCheck className="w-4 h-4 text-emerald-400" />
+                      <CheckCheck className="w-3.5 h-3.5 text-emerald-600" />
                     ) : (
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-3.5 h-3.5" />
                     )}
                   </button>
                 </div>
-                <div className="text-xs text-emerald-300 whitespace-pre-line leading-relaxed font-medium bg-slate-950/80 p-3 rounded-lg border border-brand-500/20">
+                <div className="text-xs text-slate-900 whitespace-pre-line leading-relaxed font-medium">
                   {activeSection.enhanced}
                 </div>
               </div>
@@ -283,14 +276,14 @@ export default function ResumeEnhancementPage() {
 
             {/* Improvement Highlights */}
             {activeSection.improvements && (
-              <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
+                <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
                   Why this enhancement scores higher:
                 </span>
-                <ul className="space-y-1.5">
+                <ul className="space-y-1">
                   {activeSection.improvements.map((imp, idx) => (
-                    <li key={idx} className="text-xs text-slate-300 flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <li key={idx} className="text-xs text-slate-700 flex items-center gap-2">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                       <span>{imp}</span>
                     </li>
                   ))}
@@ -299,13 +292,13 @@ export default function ResumeEnhancementPage() {
             )}
 
             {/* Section Actions */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
               <button
                 onClick={() => updateSectionStatus(activeSection.id, 'rejected')}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold border flex items-center gap-1.5 transition-colors ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold border flex items-center gap-1 transition-colors cursor-pointer ${
                   activeSection.status === 'rejected'
-                    ? 'bg-rose-500/20 border-rose-500/40 text-rose-300'
-                    : 'border-slate-700 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10'
+                    ? 'bg-rose-50 border-rose-200 text-rose-700'
+                    : 'border-slate-300 text-slate-600 hover:text-rose-700 hover:bg-rose-50'
                 }`}
               >
                 <X className="w-3.5 h-3.5" />
@@ -313,10 +306,10 @@ export default function ResumeEnhancementPage() {
               </button>
               <button
                 onClick={() => updateSectionStatus(activeSection.id, 'accepted')}
-                className={`px-5 py-2 rounded-xl text-xs font-semibold border flex items-center gap-1.5 transition-colors ${
+                className={`px-4 py-1.5 rounded-lg text-xs font-semibold border flex items-center gap-1 transition-colors cursor-pointer ${
                   activeSection.status === 'accepted'
-                    ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
-                    : 'bg-brand-600 border-transparent text-white hover:bg-brand-500'
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                    : 'bg-blue-600 border-transparent text-white hover:bg-blue-700'
                 }`}
               >
                 <Check className="w-3.5 h-3.5" />
@@ -328,19 +321,19 @@ export default function ResumeEnhancementPage() {
       </div>
 
       {/* Next Flow Step Navigation */}
-      <div className="flex items-center justify-between pt-4">
+      <div className="flex items-center justify-between pt-2">
         <button
           onClick={() => navigate('/gap-analysis')}
-          className="text-xs text-slate-400 hover:text-slate-200"
+          className="text-xs text-slate-500 hover:text-slate-800 cursor-pointer"
         >
           ← Back to Gap Analysis
         </button>
         <button
           onClick={() => navigate('/mock-interview')}
-          className="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-lg shadow-brand-500/20 flex items-center gap-2 transition-all active:scale-95"
+          className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-subtle flex items-center gap-1.5 transition-colors"
         >
           <span>Proceed to Mock Interview</span>
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>

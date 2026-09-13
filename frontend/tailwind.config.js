@@ -8,43 +8,32 @@ export default {
     extend: {
       colors: {
         brand: {
-          50: '#eef6ff',
-          100: '#d9ebff',
-          200: '#bcdbff',
-          300: '#8ec4fe',
-          400: '#59a3fa',
-          500: '#3381f4',
-          600: '#1d63e7',
-          700: '#174dce',
-          800: '#1940a7',
-          900: '#1a3883',
-          950: '#102351',
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e40af',
+          900: '#1e3a8a',
+          950: '#172554',
         },
-        accent: {
-          50: '#f0fdf9',
-          100: '#ccfbeF',
-          500: '#14b8a6',
-          600: '#0d9488',
-        }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['Outfit', 'Inter', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        display: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
       },
       boxShadow: {
-        'glow': '0 0 25px -5px rgba(59, 130, 246, 0.3)',
-        'glow-emerald': '0 0 25px -5px rgba(16, 185, 129, 0.3)',
-        'card': '0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.03)',
+        'subtle': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.07), 0 1px 2px -1px rgba(0, 0, 0, 0.04)',
+        'card-hover': '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02)',
+        'elevated': '0 20px 25px -5px rgba(0, 0, 0, 0.07), 0 8px 10px -6px rgba(0, 0, 0, 0.03)',
       },
-      animation: {
-        'pulse-subtle': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'float': 'float 6s ease-in-out infinite',
-      },
-      keyframes: {
-        float: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-10px)' },
-        }
+      borderRadius: {
+        'xl': '0.75rem',
+        '2xl': '1rem',
       }
     },
   },

@@ -1,16 +1,10 @@
 import React, { useState } from 'react';
 import {
   User,
-  Mail,
-  Phone,
-  MapPin,
-  Briefcase,
-  Layers,
   Save,
   Check,
   Plus,
-  X,
-  FileCheck2
+  X
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -50,113 +44,111 @@ export default function ProfilePage() {
     setUserProfile(formData);
     setIsSaved(true);
     showToast('Profile changes saved successfully!', 'success');
-    setTimeout(() => setIsSaved(false), 2500);
+    setTimeout(() => setIsSaved(false), 2000);
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-300">
+    <div className="max-w-4xl mx-auto space-y-6">
       {/* Header Banner */}
-      <div className="glass-card rounded-2xl p-6 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white rounded-xl p-5 lg:p-6 border border-slate-200 shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-brand-400 uppercase tracking-wider mb-1">
-            <User className="w-4 h-4" />
-            <span>Candidate Preferences & Profile</span>
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-600 uppercase tracking-wider mb-0.5">
+            <User className="w-3.5 h-3.5" />
+            <span>Candidate Profile</span>
           </div>
-          <h2 className="text-xl lg:text-2xl font-extrabold text-white font-display">
-            Candidate Profile
+          <h2 className="text-lg lg:text-xl font-bold text-slate-900 font-display">
+            Candidate Profile & Preferences
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Manage your personal details, target career role, and primary skills inventory
+          <p className="text-xs text-slate-500 mt-0.5">
+            Manage your personal contact details, target career role, and skills inventory
           </p>
         </div>
 
         <button
           onClick={handleSaveProfile}
-          className="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-md shadow-brand-500/20 flex items-center gap-2 transition-all active:scale-95"
+          className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-subtle flex items-center gap-1.5 transition-colors cursor-pointer"
         >
-          {isSaved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-          <span>{isSaved ? 'Saved!' : 'Save Changes'}</span>
+          {isSaved ? <Check className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
+          <span>{isSaved ? 'Saved' : 'Save Changes'}</span>
         </button>
       </div>
 
-      <form onSubmit={handleSaveProfile} className="space-y-6">
+      <form onSubmit={handleSaveProfile} className="space-y-5">
         {/* Basic Information */}
-        <div className="glass-card rounded-2xl p-6 lg:p-7 border border-slate-800 space-y-5">
-          <h3 className="text-base font-bold text-white font-display border-b border-slate-800 pb-3">
+        <div className="bg-white rounded-xl p-5 lg:p-6 border border-slate-200 shadow-card space-y-4">
+          <h3 className="text-sm font-bold text-slate-900 font-display border-b border-slate-100 pb-2.5">
             Personal & Contact Details
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Full Name</label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:border-brand-500 focus:outline-none"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Email Address</label>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-700">Full Name</label>
               <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:border-brand-500 focus:outline-none"
+                type="text"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:border-blue-500 focus:outline-none"
                 required
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Phone Number</label>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-700">Email Address</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:border-blue-500 focus:outline-none"
+                required
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-700">Phone Number</label>
               <input
                 type="text"
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:border-brand-500 focus:outline-none"
+                className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:border-blue-500 focus:outline-none"
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Location</label>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-700">Location</label>
               <input
                 type="text"
                 value={formData.location}
                 onChange={(e) => handleInputChange('location', e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:border-brand-500 focus:outline-none"
+                className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:border-blue-500 focus:outline-none"
               />
             </div>
           </div>
         </div>
 
         {/* Target Role & Experience */}
-        <div className="glass-card rounded-2xl p-6 lg:p-7 border border-slate-800 space-y-5">
-          <h3 className="text-base font-bold text-white font-display border-b border-slate-800 pb-3">
+        <div className="bg-white rounded-xl p-5 lg:p-6 border border-slate-200 shadow-card space-y-4">
+          <h3 className="text-sm font-bold text-slate-900 font-display border-b border-slate-100 pb-2.5">
             Career Focus & Seniority
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Target Role Title</label>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-700">Target Role Title</label>
               <input
                 type="text"
                 value={formData.targetRole}
                 onChange={(e) => handleInputChange('targetRole', e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:border-brand-500 focus:outline-none"
+                className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:border-blue-500 focus:outline-none"
                 required
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Experience Level</label>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-700">Experience Level</label>
               <select
                 value={formData.experienceLevel}
                 onChange={(e) => handleInputChange('experienceLevel', e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:border-brand-500 focus:outline-none"
+                className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:border-blue-500 focus:outline-none"
               >
                 <option value="Entry-Level (0-1 years)">Entry-Level (0-1 years)</option>
                 <option value="Junior-to-Mid (1-2 years)">Junior-to-Mid (1-2 years)</option>
@@ -165,30 +157,30 @@ export default function ProfilePage() {
               </select>
             </div>
 
-            <div className="sm:col-span-2 space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Professional Headline</label>
+            <div className="sm:col-span-2 space-y-1">
+              <label className="text-xs font-semibold text-slate-700">Professional Headline</label>
               <textarea
                 rows={2}
                 value={formData.headline}
                 onChange={(e) => handleInputChange('headline', e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:border-brand-500 focus:outline-none"
+                className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-none"
               />
             </div>
           </div>
         </div>
 
         {/* Skills Tag Management */}
-        <div className="glass-card rounded-2xl p-6 lg:p-7 border border-slate-800 space-y-5">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="bg-white rounded-xl p-5 lg:p-6 border border-slate-200 shadow-card space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
             <div>
-              <h3 className="text-base font-bold text-white font-display">
+              <h3 className="text-sm font-bold text-slate-900 font-display">
                 Skills & Technologies Tag Inventory
               </h3>
-              <p className="text-xs text-slate-400">
-                These skills are used to pre-populate candidate benchmarks during new ATS scans
+              <p className="text-xs text-slate-500">
+                Skills used to pre-populate candidate benchmarks during new ATS scans
               </p>
             </div>
-            <span className="text-xs text-slate-400 font-mono">
+            <span className="text-xs text-slate-500 font-mono">
               {formData.skills.length} skills
             </span>
           </div>
@@ -200,7 +192,7 @@ export default function ProfilePage() {
               value={newSkill}
               onChange={(e) => setNewSkill(e.target.value)}
               placeholder="Add skill (e.g. Next.js, Redux, Docker)..."
-              className="flex-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2 text-xs text-slate-100 focus:border-brand-500 focus:outline-none"
+              className="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:border-blue-500 focus:outline-none"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
@@ -211,25 +203,26 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={handleAddSkill}
-              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 flex items-center gap-1.5"
+              className="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold border border-slate-200 flex items-center gap-1 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Add Skill</span>
+              <span>Add</span>
             </button>
           </div>
 
           {/* Skills badge list */}
-          <div className="flex flex-wrap gap-2 pt-2">
+          <div className="flex flex-wrap gap-2 pt-1">
             {formData.skills.map((skill) => (
               <span
                 key={skill}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-brand-500/10 text-brand-300 border border-brand-500/30 group"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200"
               >
                 <span>{skill}</span>
                 <button
                   type="button"
                   onClick={() => handleRemoveSkill(skill)}
-                  className="text-brand-400 hover:text-rose-400 transition-colors"
+                  className="text-blue-500 hover:text-rose-600 transition-colors cursor-pointer"
+                  aria-label={`Remove ${skill}`}
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -239,12 +232,12 @@ export default function ProfilePage() {
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-end pt-2">
+        <div className="flex justify-end pt-1">
           <button
             type="submit"
-            className="px-8 py-3.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow-lg shadow-brand-500/25 flex items-center gap-2 transition-all active:scale-95"
+            className="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-subtle flex items-center gap-1.5 transition-colors cursor-pointer"
           >
-            {isSaved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+            {isSaved ? <Check className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
             <span>Save Profile Preferences</span>
           </button>
         </div>
