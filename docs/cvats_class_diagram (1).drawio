@@ -1,0 +1,629 @@
+<mxfile host="app.diagrams.net" agent="Claude">
+  <diagram name="Class Diagram - CVATS" id="classDiagram1">
+    <mxGraphModel dx="1015" dy="450" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1150" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;fontSize=20;fontStyle=1;align=center;verticalAlign=middle;" value="Class Diagram - CVATS (AI-Powered Job Readiness Platform)" vertex="1">
+          <mxGeometry height="30" width="1520" x="40" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="User" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;align=center;" value="User" vertex="1">
+          <mxGeometry height="212" width="260" x="60" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="U_a1" parent="User" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- userID : int" vertex="1">
+          <mxGeometry height="22" width="260" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="U_a2" parent="User" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- name : string" vertex="1">
+          <mxGeometry height="22" width="260" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="U_a3" parent="User" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- email : string" vertex="1">
+          <mxGeometry height="22" width="260" y="74" as="geometry" />
+        </mxCell>
+        <mxCell id="U_a4" parent="User" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- passwordHash : string" vertex="1">
+          <mxGeometry height="22" width="260" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="U_a5" parent="User" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- createdAt : date" vertex="1">
+          <mxGeometry height="22" width="260" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="U_d" parent="User" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" value="" vertex="1">
+          <mxGeometry height="8" width="260" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="U_m1" parent="User" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ register() : bool" vertex="1">
+          <mxGeometry height="22" width="260" y="148" as="geometry" />
+        </mxCell>
+        <mxCell id="U_m2" parent="User" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ login() : bool" vertex="1">
+          <mxGeometry height="22" width="260" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="U_m3" parent="User" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ viewHistory() : List&lt;Analysis&gt;" vertex="1">
+          <mxGeometry height="22" width="260" y="192" as="geometry" />
+        </mxCell>
+        <mxCell id="Resume" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;align=center;" value="Resume" vertex="1">
+          <mxGeometry height="256" width="280" x="60" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="R_a1" parent="Resume" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- resumeID : int" vertex="1">
+          <mxGeometry height="22" width="280" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="R_a2" parent="Resume" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- userID : int" vertex="1">
+          <mxGeometry height="22" width="280" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="R_a3" parent="Resume" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- fileName : string" vertex="1">
+          <mxGeometry height="22" width="280" y="74" as="geometry" />
+        </mxCell>
+        <mxCell id="R_a4" parent="Resume" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- fileFormat : string" vertex="1">
+          <mxGeometry height="22" width="280" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="R_a5" parent="Resume" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- rawText : string" vertex="1">
+          <mxGeometry height="22" width="280" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="R_a6" parent="Resume" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- uploadedAt : date" vertex="1">
+          <mxGeometry height="22" width="280" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="R_d" parent="Resume" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" value="" vertex="1">
+          <mxGeometry height="8" width="280" y="162" as="geometry" />
+        </mxCell>
+        <mxCell id="R_m1" parent="Resume" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ upload() : bool" vertex="1">
+          <mxGeometry height="22" width="280" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="R_m2" parent="Resume" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ extractText() : string" vertex="1">
+          <mxGeometry height="22" width="280" y="192" as="geometry" />
+        </mxCell>
+        <mxCell id="R_m3" parent="Resume" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ getParsedData() : ParsedResume" vertex="1">
+          <mxGeometry height="22" width="280" y="214" as="geometry" />
+        </mxCell>
+        <mxCell id="R_m4" parent="Resume" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ download() : File" vertex="1">
+          <mxGeometry height="22" width="280" y="236" as="geometry" />
+        </mxCell>
+        <mxCell id="EnhResume" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;align=center;" value="EnhancedResume" vertex="1">
+          <mxGeometry height="168" width="280" x="60" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="ER_a1" parent="EnhResume" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- enhancedID : int" vertex="1">
+          <mxGeometry height="22" width="280" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ER_a2" parent="EnhResume" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- originalResumeID : int" vertex="1">
+          <mxGeometry height="22" width="280" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="ER_a3" parent="EnhResume" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- atsScore : float" vertex="1">
+          <mxGeometry height="22" width="280" y="74" as="geometry" />
+        </mxCell>
+        <mxCell id="ER_a4" parent="EnhResume" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- generatedAt : date" vertex="1">
+          <mxGeometry height="22" width="280" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="ER_d" parent="EnhResume" style="line;strokeWidth=1;fillColor=none;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" value="" vertex="1">
+          <mxGeometry height="8" width="280" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="ER_m1" parent="EnhResume" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ optimizeBullets() : void" vertex="1">
+          <mxGeometry height="22" width="280" y="126" as="geometry" />
+        </mxCell>
+        <mxCell id="ER_m2" parent="EnhResume" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ applyATSFormat() : void" vertex="1">
+          <mxGeometry height="22" width="280" y="148" as="geometry" />
+        </mxCell>
+        <mxCell id="JD" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;align=center;" value="JobDescription" vertex="1">
+          <mxGeometry height="234" width="280" x="430" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="J_a1" parent="JD" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- jdID : int" vertex="1">
+          <mxGeometry height="22" width="280" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="J_a2" parent="JD" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- jobTitle : string" vertex="1">
+          <mxGeometry height="22" width="280" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="J_a3" parent="JD" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- companyName : string" vertex="1">
+          <mxGeometry height="22" width="280" y="74" as="geometry" />
+        </mxCell>
+        <mxCell id="J_a4" parent="JD" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- rawText : string" vertex="1">
+          <mxGeometry height="22" width="280" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="J_a5" parent="JD" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- requiredSkills : List&lt;string&gt;" vertex="1">
+          <mxGeometry height="22" width="280" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="J_a6" parent="JD" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- preferredSkills : List&lt;string&gt;" vertex="1">
+          <mxGeometry height="22" width="280" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="J_d" parent="JD" style="line;strokeWidth=1;fillColor=none;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" value="" vertex="1">
+          <mxGeometry height="8" width="280" y="162" as="geometry" />
+        </mxCell>
+        <mxCell id="J_m1" parent="JD" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ parseJD() : ParsedJD" vertex="1">
+          <mxGeometry height="22" width="280" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="J_m2" parent="JD" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ extractKeywords() : List&lt;string&gt;" vertex="1">
+          <mxGeometry height="22" width="280" y="192" as="geometry" />
+        </mxCell>
+        <mxCell id="J_m3" parent="JD" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ getRequirements() : List&lt;string&gt;" vertex="1">
+          <mxGeometry height="22" width="280" y="214" as="geometry" />
+        </mxCell>
+        <mxCell id="Parser" parent="1" style="swimlane;fontStyle=3;childLayout=stackLayout;horizontal=1;startSize=42;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;align=center;" value="&lt;&lt;abstract&gt;&gt;&#xa;Parser" vertex="1">
+          <mxGeometry height="138" width="280" x="430" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="P_a1" parent="Parser" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="# parserType : string" vertex="1">
+          <mxGeometry height="22" width="280" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="P_d" parent="Parser" style="line;strokeWidth=1;fillColor=none;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" value="" vertex="1">
+          <mxGeometry height="8" width="280" y="64" as="geometry" />
+        </mxCell>
+        <mxCell id="P_m1" parent="Parser" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;fontStyle=2;" value="+ parse(text : string) : object" vertex="1">
+          <mxGeometry height="22" width="280" y="72" as="geometry" />
+        </mxCell>
+        <mxCell id="P_m2" parent="Parser" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;fontStyle=2;" value="+ extractEntities() : Map" vertex="1">
+          <mxGeometry height="22" width="280" y="94" as="geometry" />
+        </mxCell>
+        <mxCell id="P_m3" parent="Parser" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ structureData() : JSON" vertex="1">
+          <mxGeometry height="22" width="280" y="116" as="geometry" />
+        </mxCell>
+        <mxCell id="ResumeParser" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;align=center;" value="ResumeParser" vertex="1">
+          <mxGeometry height="118" width="250" x="790" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="RP_m1" parent="ResumeParser" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ extractSkills() : List" vertex="1">
+          <mxGeometry height="22" width="250" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="RP_m2" parent="ResumeParser" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ extractExperience() : List" vertex="1">
+          <mxGeometry height="22" width="250" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="RP_m3" parent="ResumeParser" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ extractEducation() : List" vertex="1">
+          <mxGeometry height="22" width="250" y="74" as="geometry" />
+        </mxCell>
+        <mxCell id="RP_m4" parent="ResumeParser" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ extractProjects() : List" vertex="1">
+          <mxGeometry height="22" width="250" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="JDParser" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;align=center;" value="JDParser" vertex="1">
+          <mxGeometry height="96" width="250" x="1090" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="JP_m1" parent="JDParser" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ extractRole() : string" vertex="1">
+          <mxGeometry height="22" width="250" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="JP_m2" parent="JDParser" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ extractSkills() : List" vertex="1">
+          <mxGeometry height="22" width="250" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="JP_m3" parent="JDParser" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ extractQualifications() : List" vertex="1">
+          <mxGeometry height="22" width="250" y="74" as="geometry" />
+        </mxCell>
+        <mxCell id="MatchEngine" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;align=center;" value="MatchingEngine" vertex="1">
+          <mxGeometry height="190" width="290" x="800" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="ME_a1" parent="MatchEngine" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- engineID : int" vertex="1">
+          <mxGeometry height="22" width="290" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ME_a2" parent="MatchEngine" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- weightConfig : Map" vertex="1">
+          <mxGeometry height="22" width="290" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="ME_d" parent="MatchEngine" style="line;strokeWidth=1;fillColor=none;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" value="" vertex="1">
+          <mxGeometry height="8" width="290" y="74" as="geometry" />
+        </mxCell>
+        <mxCell id="ME_m1" parent="MatchEngine" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ keywordMatch() : float" vertex="1">
+          <mxGeometry height="22" width="290" y="82" as="geometry" />
+        </mxCell>
+        <mxCell id="ME_m2" parent="MatchEngine" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ semanticSimilarity() : float" vertex="1">
+          <mxGeometry height="22" width="290" y="104" as="geometry" />
+        </mxCell>
+        <mxCell id="ME_m3" parent="MatchEngine" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ calculateCategoryScores() : Map" vertex="1">
+          <mxGeometry height="22" width="290" y="126" as="geometry" />
+        </mxCell>
+        <mxCell id="ME_m4" parent="MatchEngine" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ calculateOverallScore() : float" vertex="1">
+          <mxGeometry height="22" width="290" y="148" as="geometry" />
+        </mxCell>
+        <mxCell id="ME_m5" parent="MatchEngine" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ generateAnalysis() : Analysis" vertex="1">
+          <mxGeometry height="22" width="290" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="Analysis" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;align=center;" value="Analysis" vertex="1">
+          <mxGeometry height="256" width="290" x="430" y="720" as="geometry" />
+        </mxCell>
+        <mxCell id="A_a1" parent="Analysis" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- analysisID : int" vertex="1">
+          <mxGeometry height="22" width="290" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="A_a2" parent="Analysis" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- resumeID : int" vertex="1">
+          <mxGeometry height="22" width="290" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="A_a3" parent="Analysis" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- jdID : int" vertex="1">
+          <mxGeometry height="22" width="290" y="74" as="geometry" />
+        </mxCell>
+        <mxCell id="A_a4" parent="Analysis" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- overallScore : float" vertex="1">
+          <mxGeometry height="22" width="290" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="A_a5" parent="Analysis" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- categoryScores : Map" vertex="1">
+          <mxGeometry height="22" width="290" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="A_a6" parent="Analysis" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- matchedSkills : List&lt;string&gt;" vertex="1">
+          <mxGeometry height="22" width="290" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="A_a7" parent="Analysis" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- missingSkills : List&lt;string&gt;" vertex="1">
+          <mxGeometry height="22" width="290" y="162" as="geometry" />
+        </mxCell>
+        <mxCell id="A_a8" parent="Analysis" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- createdAt : date" vertex="1">
+          <mxGeometry height="22" width="290" y="184" as="geometry" />
+        </mxCell>
+        <mxCell id="A_d" parent="Analysis" style="line;strokeWidth=1;fillColor=none;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" value="" vertex="1">
+          <mxGeometry height="8" width="290" y="206" as="geometry" />
+        </mxCell>
+        <mxCell id="A_m1" parent="Analysis" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ getScoreBreakdown() : Map" vertex="1">
+          <mxGeometry height="22" width="290" y="214" as="geometry" />
+        </mxCell>
+        <mxCell id="A_m2" parent="Analysis" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ saveAnalysis() : bool" vertex="1">
+          <mxGeometry height="22" width="290" y="236" as="geometry" />
+        </mxCell>
+        <mxCell id="GapAnalysis" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;align=center;" value="GapAnalysis" vertex="1">
+          <mxGeometry height="190" width="290" x="800" y="720" as="geometry" />
+        </mxCell>
+        <mxCell id="G_a1" parent="GapAnalysis" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- gapID : int" vertex="1">
+          <mxGeometry height="22" width="290" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="G_a2" parent="GapAnalysis" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- strengths : List&lt;string&gt;" vertex="1">
+          <mxGeometry height="22" width="290" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="G_a3" parent="GapAnalysis" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- thingsToImprove : List&lt;string&gt;" vertex="1">
+          <mxGeometry height="22" width="290" y="74" as="geometry" />
+        </mxCell>
+        <mxCell id="G_a4" parent="GapAnalysis" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- thingsToLearn : List&lt;string&gt;" vertex="1">
+          <mxGeometry height="22" width="290" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="G_d" parent="GapAnalysis" style="line;strokeWidth=1;fillColor=none;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" value="" vertex="1">
+          <mxGeometry height="8" width="290" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="G_m1" parent="GapAnalysis" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ identifyStrengths() : List" vertex="1">
+          <mxGeometry height="22" width="290" y="126" as="geometry" />
+        </mxCell>
+        <mxCell id="G_m2" parent="GapAnalysis" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ identifyGaps() : List" vertex="1">
+          <mxGeometry height="22" width="290" y="148" as="geometry" />
+        </mxCell>
+        <mxCell id="G_m3" parent="GapAnalysis" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ generateRecommendations() : List" vertex="1">
+          <mxGeometry height="22" width="290" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="Recommendation" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;align=center;" value="Recommendation" vertex="1">
+          <mxGeometry height="168" width="260" x="1170" y="720" as="geometry" />
+        </mxCell>
+        <mxCell id="Rec_a1" parent="Recommendation" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- recID : int" vertex="1">
+          <mxGeometry height="22" width="260" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="Rec_a2" parent="Recommendation" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- skillName : string" vertex="1">
+          <mxGeometry height="22" width="260" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="Rec_a3" parent="Recommendation" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- resourceTitle : string" vertex="1">
+          <mxGeometry height="22" width="260" y="74" as="geometry" />
+        </mxCell>
+        <mxCell id="Rec_a4" parent="Recommendation" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- resourceURL : string" vertex="1">
+          <mxGeometry height="22" width="260" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="Rec_d" parent="Recommendation" style="line;strokeWidth=1;fillColor=none;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" value="" vertex="1">
+          <mxGeometry height="8" width="260" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="Rec_m1" parent="Recommendation" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ getResources() : List" vertex="1">
+          <mxGeometry height="22" width="260" y="126" as="geometry" />
+        </mxCell>
+        <mxCell id="Rec_m2" parent="Recommendation" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ prioritize() : void" vertex="1">
+          <mxGeometry height="22" width="260" y="148" as="geometry" />
+        </mxCell>
+        <mxCell id="MockInterview" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;align=center;" value="MockInterview" vertex="1">
+          <mxGeometry height="212" width="290" x="60" y="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="MI_a1" parent="MockInterview" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- interviewID : int" vertex="1">
+          <mxGeometry height="22" width="290" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="MI_a2" parent="MockInterview" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- userID : int" vertex="1">
+          <mxGeometry height="22" width="290" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="MI_a3" parent="MockInterview" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- targetRole : string" vertex="1">
+          <mxGeometry height="22" width="290" y="74" as="geometry" />
+        </mxCell>
+        <mxCell id="MI_a4" parent="MockInterview" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- status : string" vertex="1">
+          <mxGeometry height="22" width="290" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="MI_a5" parent="MockInterview" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- startedAt : date" vertex="1">
+          <mxGeometry height="22" width="290" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="MI_d" parent="MockInterview" style="line;strokeWidth=1;fillColor=none;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" value="" vertex="1">
+          <mxGeometry height="8" width="290" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="MI_m1" parent="MockInterview" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ startSession() : void" vertex="1">
+          <mxGeometry height="22" width="290" y="148" as="geometry" />
+        </mxCell>
+        <mxCell id="MI_m2" parent="MockInterview" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ generateQuestions() : List&lt;Question&gt;" vertex="1">
+          <mxGeometry height="22" width="290" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="MI_m3" parent="MockInterview" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ endSession() : InterviewReport" vertex="1">
+          <mxGeometry height="22" width="290" y="192" as="geometry" />
+        </mxCell>
+        <mxCell id="Question" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;align=center;" value="Question" vertex="1">
+          <mxGeometry height="168" width="260" x="430" y="1020" as="geometry" />
+        </mxCell>
+        <mxCell id="Q_a1" parent="Question" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- questionID : int" vertex="1">
+          <mxGeometry height="22" width="260" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="Q_a2" parent="Question" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- questionText : string" vertex="1">
+          <mxGeometry height="22" width="260" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="Q_a3" parent="Question" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- category : string" vertex="1">
+          <mxGeometry height="22" width="260" y="74" as="geometry" />
+        </mxCell>
+        <mxCell id="Q_a4" parent="Question" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- difficulty : string" vertex="1">
+          <mxGeometry height="22" width="260" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="Q_d" parent="Question" style="line;strokeWidth=1;fillColor=none;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" value="" vertex="1">
+          <mxGeometry height="8" width="260" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="Q_m1" parent="Question" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ getQuestion() : string" vertex="1">
+          <mxGeometry height="22" width="260" y="126" as="geometry" />
+        </mxCell>
+        <mxCell id="Q_m2" parent="Question" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ recordAnswer(ans : string) : void" vertex="1">
+          <mxGeometry height="22" width="260" y="148" as="geometry" />
+        </mxCell>
+        <mxCell id="AnswerEval" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;align=center;" value="AnswerEvaluation" vertex="1">
+          <mxGeometry height="192" width="290" x="800" y="1020" as="geometry" />
+        </mxCell>
+        <mxCell id="AE_a1" parent="AnswerEval" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- evalID : int" vertex="1">
+          <mxGeometry height="22" width="290" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AE_a2" parent="AnswerEval" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- answerText : string" vertex="1">
+          <mxGeometry height="22" width="290" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="AE_a3" parent="AnswerEval" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- technicalScore : float" vertex="1">
+          <mxGeometry height="22" width="290" y="74" as="geometry" />
+        </mxCell>
+        <mxCell id="AE_a4" parent="AnswerEval" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- communicationScore : float" vertex="1">
+          <mxGeometry height="22" width="290" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="AE_a5" parent="AnswerEval" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- feedback : string" vertex="1">
+          <mxGeometry height="22" width="290" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="AE_d" parent="AnswerEval" style="line;strokeWidth=1;fillColor=none;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" value="" vertex="1">
+          <mxGeometry height="8" width="290" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="AE_m1" parent="AnswerEval" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ evaluateAnswer() : float" vertex="1">
+          <mxGeometry height="22" width="290" y="148" as="geometry" />
+        </mxCell>
+        <mxCell id="AE_m2" parent="AnswerEval" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ generateFeedback() : string" vertex="1">
+          <mxGeometry height="22" width="290" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="IntReport" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;align=center;" value="InterviewReport" vertex="1">
+          <mxGeometry height="190" width="270" x="1170" y="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="IR_a1" parent="IntReport" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- reportID : int" vertex="1">
+          <mxGeometry height="22" width="270" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="IR_a2" parent="IntReport" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- interviewID : int" vertex="1">
+          <mxGeometry height="22" width="270" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="IR_a3" parent="IntReport" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- overallScore : float" vertex="1">
+          <mxGeometry height="22" width="270" y="74" as="geometry" />
+        </mxCell>
+        <mxCell id="IR_a4" parent="IntReport" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- weakAreas : List&lt;string&gt;" vertex="1">
+          <mxGeometry height="22" width="270" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="IR_a5" parent="IntReport" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- revisionTopics : List&lt;string&gt;" vertex="1">
+          <mxGeometry height="22" width="270" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="IR_d" parent="IntReport" style="line;strokeWidth=1;fillColor=none;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" value="" vertex="1">
+          <mxGeometry height="8" width="270" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="IR_m1" parent="IntReport" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ generateReport() : Report" vertex="1">
+          <mxGeometry height="22" width="270" y="148" as="geometry" />
+        </mxCell>
+        <mxCell id="IR_m2" parent="IntReport" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ exportReport() : File" vertex="1">
+          <mxGeometry height="22" width="270" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="History" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;align=center;" value="HistoryManager" vertex="1">
+          <mxGeometry height="146" width="270" x="1170" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="H_a1" parent="History" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="- userID : int" vertex="1">
+          <mxGeometry height="22" width="270" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="H_d" parent="History" style="line;strokeWidth=1;fillColor=none;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" value="" vertex="1">
+          <mxGeometry height="8" width="270" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="H_m1" parent="History" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ getPastAnalyses() : List" vertex="1">
+          <mxGeometry height="22" width="270" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="H_m2" parent="History" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ getResumeVersions() : List" vertex="1">
+          <mxGeometry height="22" width="270" y="82" as="geometry" />
+        </mxCell>
+        <mxCell id="H_m3" parent="History" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ getInterviewHistory() : List" vertex="1">
+          <mxGeometry height="22" width="270" y="104" as="geometry" />
+        </mxCell>
+        <mxCell id="H_m4" parent="History" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="+ exportHistory() : File" vertex="1">
+          <mxGeometry height="22" width="270" y="126" as="geometry" />
+        </mxCell>
+        <mxCell id="rel1" edge="1" parent="1" source="User" style="endArrow=open;html=1;endSize=12;startArrow=diamondThin;startSize=14;startFill=1;edgeStyle=orthogonalEdgeStyle;align=center;verticalAlign=bottom;fontSize=11;exitX=0.35;exitY=1;entryX=0.35;entryY=0;" target="Resume" value="uploads">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel1s" connectable="0" parent="rel1" style="edgeLabel;html=1;fontSize=11;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.8" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel1t" connectable="0" parent="rel1" style="edgeLabel;html=1;fontSize=11;" value="1..*" vertex="1">
+          <mxGeometry relative="1" x="0.8" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel2" edge="1" parent="1" source="User" style="endArrow=open;html=1;endSize=12;startArrow=diamondThin;startSize=14;startFill=0;edgeStyle=orthogonalEdgeStyle;fontSize=11;exitX=1;exitY=0.7;entryX=0;entryY=0.2;" target="JD" value="submits">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="380" y="238" />
+              <mxPoint x="380" y="447" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel2s" connectable="0" parent="rel2" style="edgeLabel;html=1;fontSize=11;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.8" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel2t" connectable="0" parent="rel2" style="edgeLabel;html=1;fontSize=11;" value="1..*" vertex="1">
+          <mxGeometry relative="1" x="0.8" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel3" edge="1" parent="1" source="EnhResume" style="endArrow=block;endSize=16;endFill=0;html=1;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=0;entryX=0.5;entryY=1;" target="Resume" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel4" edge="1" parent="1" source="ResumeParser" style="endArrow=block;endSize=16;endFill=0;html=1;edgeStyle=orthogonalEdgeStyle;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" target="Parser" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel5" edge="1" parent="1" source="JDParser" style="endArrow=block;endSize=16;endFill=0;html=1;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=0;entryX=0.5;entryY=0;" target="Parser" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1215" y="90" />
+              <mxPoint x="570" y="90" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel6" edge="1" parent="1" source="Resume" style="endArrow=open;dashed=1;html=1;endSize=10;edgeStyle=orthogonalEdgeStyle;fontSize=10;exitX=1;exitY=0.15;entryX=0;entryY=1;" target="ResumeParser" value="&lt;&lt;uses&gt;&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="760" y="438" />
+              <mxPoint x="760" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel7" edge="1" parent="1" source="JD" style="endArrow=open;dashed=1;html=1;endSize=10;edgeStyle=orthogonalEdgeStyle;fontSize=10;exitX=1;exitY=0.1;entryX=0.2;entryY=1;" target="JDParser" value="&lt;&lt;uses&gt;&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1140" y="424" />
+              <mxPoint x="1140" y="330" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel8" edge="1" parent="1" source="JD" style="endArrow=open;html=1;endSize=12;edgeStyle=orthogonalEdgeStyle;fontSize=11;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="MatchEngine" value="analyzes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel9" edge="1" parent="1" source="Resume" style="endArrow=open;html=1;endSize=12;edgeStyle=orthogonalEdgeStyle;fontSize=11;exitX=1;exitY=0.85;entryX=0;entryY=0.85;" target="MatchEngine" value="analyzes">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="390" y="618" />
+              <mxPoint x="390" y="662" />
+              <mxPoint x="770" y="662" />
+              <mxPoint x="770" y="562" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel10" edge="1" parent="1" source="MatchEngine" style="endArrow=open;html=1;endSize=12;edgeStyle=orthogonalEdgeStyle;fontSize=11;exitX=0;exitY=0.9;entryX=1;entryY=0.2;" target="Analysis" value="produces">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel10s" connectable="0" parent="rel10" style="edgeLabel;html=1;fontSize=11;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.8" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel10t" connectable="0" parent="rel10" style="edgeLabel;html=1;fontSize=11;" value="1..*" vertex="1">
+          <mxGeometry relative="1" x="0.8" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel11" edge="1" parent="1" source="Analysis" style="endArrow=open;html=1;endSize=12;startArrow=diamondThin;startSize=14;startFill=1;edgeStyle=orthogonalEdgeStyle;fontSize=11;exitX=1;exitY=0.6;entryX=0;entryY=0.6;" target="GapAnalysis" value="contains">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel11s" connectable="0" parent="rel11" style="edgeLabel;html=1;fontSize=11;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.8" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel11t" connectable="0" parent="rel11" style="edgeLabel;html=1;fontSize=11;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.8" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel12" edge="1" parent="1" source="GapAnalysis" style="endArrow=open;html=1;endSize=12;startArrow=diamondThin;startSize=14;startFill=0;edgeStyle=orthogonalEdgeStyle;fontSize=11;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="Recommendation" value="generates">
+          <mxGeometry relative="1" x="0.1209" y="14" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel12s" connectable="0" parent="rel12" style="edgeLabel;html=1;fontSize=11;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.8" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel12t" connectable="0" parent="rel12" style="edgeLabel;html=1;fontSize=11;" value="0..*" vertex="1">
+          <mxGeometry relative="1" x="0.8" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel13" edge="1" parent="1" source="GapAnalysis" style="endArrow=open;dashed=1;html=1;endSize=10;edgeStyle=orthogonalEdgeStyle;fontSize=10;exitX=0;exitY=0.15;entryX=1;entryY=0.5;" target="EnhResume" value="&lt;&lt;informs&gt;&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="770" y="749" />
+              <mxPoint x="770" y="824" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel14" edge="1" parent="1" source="EnhResume" style="endArrow=open;html=1;endSize=12;startArrow=diamondThin;startSize=14;startFill=1;edgeStyle=orthogonalEdgeStyle;fontSize=11;exitX=0.1;exitY=1;entryX=0.1;entryY=0;" target="MockInterview" value="conducts">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel15" edge="1" parent="1" source="MockInterview" style="endArrow=open;html=1;endSize=12;startArrow=diamondThin;startSize=14;startFill=1;edgeStyle=orthogonalEdgeStyle;fontSize=11;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="Question" value="has">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel15s" connectable="0" parent="rel15" style="edgeLabel;html=1;fontSize=11;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.8" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel15t" connectable="0" parent="rel15" style="edgeLabel;html=1;fontSize=11;" value="1..*" vertex="1">
+          <mxGeometry relative="1" x="0.8" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel16" edge="1" parent="1" source="Question" style="endArrow=open;html=1;endSize=12;edgeStyle=orthogonalEdgeStyle;fontSize=11;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="AnswerEval" value="evaluated by">
+          <mxGeometry relative="1" x="-0.0909" y="15" as="geometry">
+            <mxPoint x="-10" y="-14" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel16s" connectable="0" parent="rel16" style="edgeLabel;html=1;fontSize=11;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.8" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel16t" connectable="0" parent="rel16" style="edgeLabel;html=1;fontSize=11;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.8" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel17" edge="1" parent="1" source="AnswerEval" style="endArrow=open;html=1;endSize=12;edgeStyle=orthogonalEdgeStyle;fontSize=11;exitX=1;exitY=0.5;entryX=0;entryY=0.7;" target="IntReport" value="aggregated into">
+          <mxGeometry relative="1" x="-0.1837" y="-15" as="geometry">
+            <mxPoint x="15" y="-15" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel17s" connectable="0" parent="rel17" style="edgeLabel;html=1;fontSize=11;" value="1..*" vertex="1">
+          <mxGeometry relative="1" x="-0.8" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel17t" connectable="0" parent="rel17" style="edgeLabel;html=1;fontSize=11;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.8" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel18" edge="1" parent="1" source="MockInterview" style="endArrow=open;html=1;endSize=12;startArrow=diamondThin;startSize=14;startFill=1;edgeStyle=orthogonalEdgeStyle;fontSize=11;exitX=0.5;exitY=1;entryX=0.5;entryY=1;" target="IntReport" value="produces">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="205" y="1250" />
+              <mxPoint x="1305" y="1250" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel19" edge="1" parent="1" source="RP_m1" style="endArrow=open;html=1;endSize=12;edgeStyle=orthogonalEdgeStyle;fontSize=11;exitX=1;exitY=0.25;entryX=0;entryY=0.2;" target="History" value="manages">
+          <mxGeometry relative="1" x="0.4631" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1389.94" y="143" />
+              <mxPoint x="1389.94" y="370.06" />
+              <mxPoint x="1139.94" y="370.06" />
+              <mxPoint x="1139.94" y="429.24" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel20" edge="1" parent="1" source="History" style="endArrow=open;dashed=1;html=1;endSize=10;edgeStyle=orthogonalEdgeStyle;fontSize=10;exitX=0.5;exitY=1;entryX=1;entryY=0.1;" target="Analysis" value="&lt;&lt;reads&gt;&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1305" y="680" />
+              <mxPoint x="740" y="680" />
+              <mxPoint x="740" y="746" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WbJAsz--GniL6ReXF7wx-2" edge="1" parent="1" source="User" style="endArrow=open;html=1;endSize=12;edgeStyle=orthogonalEdgeStyle;fontSize=11;exitX=1;exitY=0.25;entryX=0;entryY=0.2;" target="RP_m1" value="">
+          <mxGeometry relative="1" x="0.4631" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points" />
+            <mxPoint x="320" y="143" as="sourcePoint" />
+            <mxPoint x="1170" y="429" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
