@@ -1,9 +1,14 @@
 import React from 'react';
 
-export default function CircularScore({ score = 78, size = 150, strokeWidth = 10, label = "Match Score", subtitle = "" }) {
+export default function CircularScore({ score = null, size = 150, strokeWidth = 10, label = "Match Score", subtitle = "", emptyLabel = "N/A" }) {
+  const numericScore = score === null || score === undefined || score === '' ? NaN : Number(score);
+  const hasScore = Number.isFinite(numericScore);
+  const displayScore = hasScore ? Math.round(numericScore) : null;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (score / 100) * circumference;
+  const strokeDashoffset = hasScore
+    ? circumference - (Math.min(Math.max(displayScore, 0), 100) / 100) * circumference
+    : circumference;
 
   const getColor = (s) => {
     if (s >= 80) return { stroke: '#10b981', text: 'text-emerald-600', badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: 'Strong Match' };
@@ -12,7 +17,9 @@ export default function CircularScore({ score = 78, size = 150, strokeWidth = 10
     return { stroke: '#ef4444', text: 'text-rose-600', badgeBg: 'bg-rose-50 text-rose-700 border-rose-200', label: 'Low Match' };
   };
 
-  const status = getColor(score);
+  const status = hasScore
+    ? getColor(displayScore)
+    : { stroke: '#f1f5f9', text: 'text-slate-400', badgeBg: 'bg-slate-50 text-slate-500 border-slate-200', label: emptyLabel };
 
   return (
     <div className="flex flex-col items-center justify-center">
@@ -45,7 +52,7 @@ export default function CircularScore({ score = 78, size = 150, strokeWidth = 10
         {/* Center content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
           <span className={`text-3xl lg:text-4xl font-extrabold tracking-tight ${status.text} font-display`}>
-            {score}%
+            {hasScore ? `${displayScore}%` : emptyLabel}
           </span>
           <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mt-0.5">
             {label}
@@ -53,7 +60,7 @@ export default function CircularScore({ score = 78, size = 150, strokeWidth = 10
         </div>
       </div>
 
-      {subtitle && (
+      {hasScore && subtitle && (
         <span className={`mt-3 inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold border ${status.badgeBg}`}>
           {subtitle}
         </span>

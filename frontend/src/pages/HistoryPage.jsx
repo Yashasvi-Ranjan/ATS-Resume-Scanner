@@ -9,19 +9,40 @@ import {
   Calendar,
   Building,
   Plus,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export default function HistoryPage() {
   const navigate = useNavigate();
-  const { historyList, deleteHistoryItem } = useApp();
+  const { historyList, deleteHistoryItem, fetchBackendHistory, historyError, isHistoryLoading, historyMeta } = useApp();
   const [filterType, setFilterType] = useState('All'); // 'All', 'Resume Analysis', 'Mock Interview'
 
-  const filteredItems = historyList.filter((item) => {
+  React.useEffect(() => {
+    if (fetchBackendHistory) {
+      fetchBackendHistory({ page: 1 });
+    }
+  }, [fetchBackendHistory]);
+
+  const currentPage = historyMeta?.page || 1;
+  const goToPage = (page) => fetchBackendHistory({ page });
+
+  const isAnalysisType = (t) => t === 'analysis' || t === 'Resume Analysis';
+  const typeLabel = (t) => (isAnalysisType(t) ? 'Resume Analysis' : t === 'interview' ? 'Mock Interview' : t);
+
+  const filteredItems = (Array.isArray(historyList) ? historyList : []).filter((item) => {
     if (filterType === 'All') return true;
-    return item.type === filterType;
+    return typeLabel(item.type) === filterType;
   });
+
+  const handleDelete = async (item) => {
+    try {
+      await deleteHistoryItem(item.id, item.type);
+    } catch {
+      // deleteHistoryItem shows its own error toast
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -33,7 +54,7 @@ export default function HistoryPage() {
             <span>Audit Trail & Records</span>
           </div>
           <h2 className="text-lg lg:text-xl font-bold text-slate-900 font-display">
-            Analysis & Mock Interview History
+            Analysis, Enhancement & Interview History
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
             Review past resume match evaluations and interview performance records
@@ -51,7 +72,7 @@ export default function HistoryPage() {
 
       {/* Filter Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
-        {['All', 'Resume Analysis', 'Mock Interview'].map((type) => (
+        {['All', 'Resume Analysis', 'Resume Enhancement', 'Mock Interview'].map((type) => (
           <button
             key={type}
             onClick={() => setFilterType(type)}
@@ -68,10 +89,28 @@ export default function HistoryPage() {
 
       {/* History Records Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-card overflow-hidden">
-        {filteredItems.length === 0 ? (
+        {historyError && (
+          <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between gap-3">
+            <p className="text-xs text-rose-600">{historyError}</p>
+            {fetchBackendHistory && (
+              <button
+                onClick={() => fetchBackendHistory({ page: currentPage })}
+                className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer shrink-0"
+              >
+                Retry
+              </button>
+            )}
+          </div>
+        )}
+        {isHistoryLoading && filteredItems.length === 0 ? (
           <div className="p-10 text-center text-slate-500 space-y-2">
             <History className="w-8 h-8 text-slate-400 mx-auto" />
-            <p className="text-xs">No historical records found for this filter category.</p>
+            <p className="text-xs">Loading history...</p>
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <div className="p-10 text-center text-slate-500 space-y-2">
+            <History className="w-8 h-8 text-slate-400 mx-auto" />
+            <p className="text-xs">{historyError ? 'No records could be loaded.' : filterType === 'All' ? 'No history yet.' : 'No records on this page for this filter.'}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -111,27 +150,33 @@ export default function HistoryPage() {
                     <td className="py-3 px-5">
                       <span
                         className={`px-2 py-0.5 rounded text-[10px] font-semibold border inline-flex items-center gap-1 ${
-                          item.type === 'Resume Analysis'
+                          isAnalysisType(item.type)
                             ? 'bg-blue-50 text-blue-700 border-blue-200'
-                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : item.type === 'Resume Enhancement'
+                              ? 'bg-violet-50 text-violet-700 border-violet-200'
+                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                         }`}
                       >
-                        {item.type === 'Resume Analysis' ? (
+                        {isAnalysisType(item.type) ? (
                           <FileSearch className="w-3 h-3" />
+                        ) : item.type === 'Resume Enhancement' ? (
+                          <Sparkles className="w-3 h-3" />
                         ) : (
                           <Bot className="w-3 h-3" />
                         )}
-                        <span>{item.type}</span>
+                        <span>{typeLabel(item.type)}</span>
                       </span>
                     </td>
                     <td className="py-3 px-5">
                       <div className="flex items-center gap-1.5">
                         <span className="font-bold text-slate-900 font-display">
-                          {item.score}%
+                          {item.score == null ? 'N/A' : `${Math.round(item.score)}%`}
                         </span>
-                        <span className="text-[10px] text-slate-500 hidden sm:inline">
-                          ({item.scoreVerdict})
-                        </span>
+                        {item.scoreVerdict != null && (
+                          <span className="text-[10px] text-slate-500 hidden sm:inline">
+                            ({item.scoreVerdict})
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="py-3 px-5">
@@ -143,14 +188,18 @@ export default function HistoryPage() {
                     <td className="py-3 px-5 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
-                          onClick={() => navigate(item.detailsUrl)}
-                          className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                          onClick={() => {
+                            if (item.detailsUrl) navigate(item.detailsUrl);
+                          }}
+                          disabled={!item.detailsUrl}
+                          title={item.detailsUrl ? undefined : 'Details not available'}
+                          className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <span>View</span>
                           <ExternalLink className="w-3 h-3 text-slate-500" />
                         </button>
                         <button
-                          onClick={() => deleteHistoryItem(item.id)}
+                          onClick={() => handleDelete(item)}
                           className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                           title="Delete record"
                         >
@@ -162,6 +211,27 @@ export default function HistoryPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+        {historyMeta && (historyMeta.totalPages > 1 || historyMeta.page > 1) && (
+          <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between gap-3">
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={!historyMeta.hasPrev || isHistoryLoading}
+              className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="text-xs text-slate-500">
+              Page {historyMeta.page} of {historyMeta.totalPages}
+            </span>
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={!historyMeta.hasNext || isHistoryLoading}
+              className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
           </div>
         )}
       </div>

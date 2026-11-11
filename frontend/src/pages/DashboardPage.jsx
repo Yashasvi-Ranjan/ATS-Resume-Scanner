@@ -18,7 +18,31 @@ import ScoreCard from '../components/ScoreCard';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { userProfile, analysisResult, resumeFile, historyList } = useApp();
+  const { userProfile, currentUser, analysisResult, resumeFile, historyList, historyError, gapAnalysis } = useApp();
+
+  const displayName = userProfile?.name || currentUser?.name || '';
+  const targetRole = userProfile?.targetRole || '';
+  const history = Array.isArray(historyList) ? historyList : [];
+
+  const hasNumber = (v) => v !== null && v !== undefined && v !== '' && Number.isFinite(Number(v));
+  const formatScore = (v) => (hasNumber(v) ? `${Math.round(Number(v))}%` : 'N/A');
+
+  const findBreakdown = (name) => {
+    const list = Array.isArray(analysisResult?.breakdown) ? analysisResult.breakdown : [];
+    return list.find((b) => (b?.category || b?.label || '').toLowerCase() === name.toLowerCase()) || null;
+  };
+  const skillsEntry = findBreakdown('Skills Match');
+  const experienceEntry = findBreakdown('Experience Match');
+  const keywordsEntry = findBreakdown('Keywords Alignment');
+  const formatWeight = (entry) => (entry?.weight ? `${entry.weight} Weight` : undefined);
+
+  const isAnalysisType = (t) => t === 'analysis' || t === 'Resume Analysis';
+  const typeLabel = (t) => (isAnalysisType(t) ? 'Resume Analysis' : t === 'interview' ? 'Mock Interview' : t);
+
+  const gapCount = gapAnalysis
+    ? (Array.isArray(gapAnalysis.improve) ? gapAnalysis.improve.length : 0) +
+      (Array.isArray(gapAnalysis.learnAndAdd) ? gapAnalysis.learnAndAdd.length : 0)
+    : null;
 
   return (
     <div className="space-y-6">
@@ -28,13 +52,21 @@ export default function DashboardPage() {
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold">
               <UserCheck className="w-3.5 h-3.5" />
-              <span>Target Role: {userProfile.targetRole}</span>
+              <span>Target Role: {targetRole || 'Not set'}</span>
             </div>
             <h2 className="text-xl lg:text-2xl font-bold text-slate-900 font-display">
-              Welcome back, {userProfile.name}
+              {displayName ? `Welcome back, ${displayName}` : 'Welcome back'}
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 max-w-xl leading-relaxed">
-              Your latest scan for <span className="font-semibold text-slate-800">{analysisResult.company}</span> shows an overall match of <span className="font-semibold text-blue-600">{analysisResult.overallScore}%</span> with targeted enhancement opportunities in TypeScript and testing.
+              {analysisResult ? (
+                hasNumber(analysisResult.overallScore) ? (
+                  <>Your latest scan for <span className="font-semibold text-slate-800">{analysisResult.company || analysisResult.jobTitle || 'your target job'}</span> shows an overall match of <span className="font-semibold text-blue-600">{formatScore(analysisResult.overallScore)}</span>.</>
+                ) : (
+                  <>Your latest scan for <span className="font-semibold text-slate-800">{analysisResult.company || analysisResult.jobTitle || 'your target job'}</span> has been saved. Scoring is not available yet.</>
+                )
+              ) : (
+                'No analysis yet. Upload a resume and add a job description to get started.'
+              )}
             </p>
           </div>
 
@@ -62,21 +94,25 @@ export default function DashboardPage() {
             <FileText className="w-4 h-4 text-blue-600 shrink-0" />
             <div className="truncate">
               <span className="text-slate-500 block text-[10px] uppercase font-semibold">Current Resume</span>
-              <span className="font-medium text-slate-800 truncate block">{resumeFile?.name || 'Sarah_Johnson_Resume.pdf'}</span>
+              <span className="font-medium text-slate-800 truncate block">{resumeFile?.name || 'No resume uploaded'}</span>
             </div>
           </div>
           <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-slate-50 border border-slate-200/80">
             <Briefcase className="w-4 h-4 text-blue-600 shrink-0" />
             <div className="truncate">
               <span className="text-slate-500 block text-[10px] uppercase font-semibold">Target Company</span>
-              <span className="font-medium text-slate-800 truncate block">{analysisResult.company} ({analysisResult.jobTitle})</span>
+              <span className="font-medium text-slate-800 truncate block">{analysisResult
+                  ? [analysisResult.company, analysisResult.jobTitle && `(${analysisResult.jobTitle})`].filter(Boolean).join(' ') || 'N/A'
+                  : 'No analysis yet'}</span>
             </div>
           </div>
           <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-slate-50 border border-slate-200/80">
             <Target className="w-4 h-4 text-emerald-600 shrink-0" />
             <div className="truncate">
               <span className="text-slate-500 block text-[10px] uppercase font-semibold">Latest Match</span>
-              <span className="font-bold text-emerald-700 block">{analysisResult.overallScore}% — {analysisResult.verdict}</span>
+              <span className="font-bold text-emerald-700 block">{analysisResult
+                  ? [formatScore(analysisResult.overallScore), analysisResult.verdict].filter(Boolean).join(' — ')
+                  : 'No analysis yet'}</span>
             </div>
           </div>
         </div>
@@ -100,34 +136,38 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <ScoreCard
             title="Overall Match"
-            score={78}
+            score={analysisResult?.overallScore ?? null}
+            emptyLabel="Pending"
             icon={Target}
             weight="Overall Score"
-            summary="Candidate satisfies 80%+ of core frontend responsibilities."
+            summary={analysisResult ? analysisResult.explanation || undefined : 'No analysis yet.'}
             onClick={() => navigate('/analysis/results')}
           />
           <ScoreCard
             title="Skills Match"
-            score={82}
+            score={skillsEntry?.score ?? null}
+            emptyLabel="Pending"
             icon={Layers}
-            weight="35% Weight"
-            summary="Strong proficiency in React, JavaScript, HTML/CSS, and REST APIs."
+            weight={formatWeight(skillsEntry)}
+            summary={skillsEntry?.summary}
             onClick={() => navigate('/gap-analysis')}
           />
           <ScoreCard
             title="Experience Match"
-            score={74}
+            score={experienceEntry?.score ?? null}
+            emptyLabel="Pending"
             icon={TrendingUp}
-            weight="25% Weight"
-            summary="2+ years relevant experience; gap in TypeScript and testing."
+            weight={formatWeight(experienceEntry)}
+            summary={experienceEntry?.summary}
             onClick={() => navigate('/gap-analysis')}
           />
           <ScoreCard
             title="Keywords Alignment"
-            score={76}
+            score={keywordsEntry?.score ?? null}
+            emptyLabel="Pending"
             icon={FileSearch}
-            weight="15% Weight"
-            summary="19 of 25 priority ATS keywords detected across sections."
+            weight={formatWeight(keywordsEntry)}
+            summary={keywordsEntry?.summary}
             onClick={() => navigate('/resume-enhancement')}
           />
         </div>
@@ -155,6 +195,10 @@ export default function DashboardPage() {
               </Link>
             </div>
 
+            {historyError && (
+              <p className="text-xs text-rose-600 mb-2">{historyError}</p>
+            )}
+
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
@@ -168,7 +212,14 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {historyList.slice(0, 4).map((item) => (
+                  {history.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="py-2.5 text-slate-500">
+                        No history yet
+                      </td>
+                    </tr>
+                  )}
+                  {history.slice(0, 4).map((item) => (
                     <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
                       <td className="py-2.5 font-medium text-slate-900">
                         {item.role}
@@ -177,26 +228,36 @@ export default function DashboardPage() {
                       <td className="py-2.5">
                         <span
                           className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${
-                            item.type === 'Resume Analysis'
+                            isAnalysisType(item.type)
                               ? 'bg-blue-50 text-blue-700 border-blue-200'
                               : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                           }`}
                         >
-                          {item.type}
+                          {typeLabel(item.type)}
                         </span>
                       </td>
                       <td className="py-2.5 font-bold text-slate-900">
-                        {item.score}%
+                        {item.score == null ? 'N/A' : `${Math.round(item.score)}%`}
                       </td>
                       <td className="py-2.5 text-slate-500">{item.date}</td>
                       <td className="py-2.5 text-right">
-                        <Link
-                          to={item.detailsUrl}
-                          className="inline-flex items-center gap-0.5 text-xs text-blue-600 hover:text-blue-700 font-semibold"
-                        >
-                          <span>View</span>
-                          <ChevronRight className="w-3 h-3" />
-                        </Link>
+                        {item.detailsUrl ? (
+                          <Link
+                            to={item.detailsUrl}
+                            className="inline-flex items-center gap-0.5 text-xs text-blue-600 hover:text-blue-700 font-semibold"
+                          >
+                            <span>View</span>
+                            <ChevronRight className="w-3 h-3" />
+                          </Link>
+                        ) : (
+                          <span
+                            aria-disabled="true"
+                            className="inline-flex items-center gap-0.5 text-xs text-slate-400 font-semibold cursor-not-allowed"
+                          >
+                            <span>View</span>
+                            <ChevronRight className="w-3 h-3" />
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -224,7 +285,7 @@ export default function DashboardPage() {
                 Enhance Experience Bullets
               </h4>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Review 4 grounded bullet suggestions to quantify achievements and elevate keyword alignment from 76% to 90%+.
+                Review your experience bullets to quantify achievements and align keywords with the target job description.
               </p>
               <button
                 onClick={() => navigate('/resume-enhancement')}
@@ -248,7 +309,9 @@ export default function DashboardPage() {
                 <span className="text-xs font-semibold text-slate-800 block">
                   Gap Analysis
                 </span>
-                <span className="text-[11px] text-slate-500">4 Gaps to address</span>
+                <span className="text-[11px] text-slate-500">
+                  {gapCount == null ? 'N/A' : `${gapCount} ${gapCount === 1 ? 'Gap' : 'Gaps'} to address`}
+                </span>
               </button>
               <button
                 onClick={() => navigate('/mock-interview')}
@@ -257,7 +320,7 @@ export default function DashboardPage() {
                 <span className="text-xs font-semibold text-slate-800 block">
                   Mock Interview
                 </span>
-                <span className="text-[11px] text-slate-500">8 Role questions</span>
+                <span className="text-[11px] text-slate-500">Practice role questions</span>
               </button>
             </div>
           </div>

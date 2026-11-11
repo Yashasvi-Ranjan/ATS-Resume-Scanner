@@ -1,9 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { UploadCloud, FileText, X, CheckCircle, RefreshCw } from 'lucide-react';
 import { mockDefaultResumeFile } from '../data/mockResume';
+import { useApp } from '../context/AppContext';
+import { DEMO_MODE } from '../config/demoMode';
 import ProgressBar from './ProgressBar';
 
 export default function FileUploader({ currentFile, onFileSelected, onFileRemoved, onError }) {
+  const { uploadResume } = useApp();
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(100);
@@ -18,7 +21,7 @@ export default function FileUploader({ currentFile, onFileSelected, onFileRemove
     setIsDragging(false);
   };
 
-  const processFile = (file) => {
+  const processFile = async (file) => {
     const validExtensions = ['.pdf', '.docx', '.doc'];
     const fileName = file.name.toLowerCase();
     const isValid = validExtensions.some((ext) => fileName.endsWith(ext));
@@ -28,26 +31,22 @@ export default function FileUploader({ currentFile, onFileSelected, onFileRemove
       return;
     }
 
-    // Simulate short upload animation
     setIsUploading(true);
-    setUploadProgress(0);
+    setUploadProgress(20);
 
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsUploading(false);
-          onFileSelected({
-            name: file.name,
-            size: `${Math.round(file.size / 1024) || 245} KB`,
-            lastModified: new Date().toISOString().split('T')[0],
-            type: file.type || 'application/pdf'
-          });
-          return 100;
-        }
-        return prev + 25;
-      });
-    }, 120);
+    try {
+      setUploadProgress(60);
+      const uploaded = await uploadResume(file);
+      setUploadProgress(100);
+      setIsUploading(false);
+      onFileSelected(uploaded);
+    } catch {
+      // Upload failed: the context already shows an error toast.
+      // Leave the file unselected; do not fabricate a local "uploaded" file.
+      setIsUploading(false);
+      setUploadProgress(0);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const handleDrop = (e) => {
@@ -135,14 +134,16 @@ export default function FileUploader({ currentFile, onFileSelected, onFileRemove
             </div>
 
             <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={handleResetToDemo}
-                title="Reload default sample resume"
-                className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </button>
+              {DEMO_MODE && (
+                <button
+                  type="button"
+                  onClick={handleResetToDemo}
+                  title="Reload default sample resume"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onFileRemoved}

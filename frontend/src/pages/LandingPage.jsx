@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useApp } from '../context/AppContext';
 import {
   FileSearch,
   Sparkles,
@@ -21,6 +22,8 @@ import CircularScore from '../components/CircularScore';
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { currentUser } = useApp();
+  const handleCTA = () => navigate(currentUser ? '/analysis' : '/register');
 
   const features = [
     {
@@ -109,10 +112,10 @@ export default function LandingPage() {
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2">
                 <button
-                  onClick={() => navigate('/analysis')}
+                  onClick={handleCTA}
                   className="w-full sm:w-auto px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-subtle flex items-center justify-center gap-2 transition-colors"
                 >
-                  <span>Start Free Analysis</span>
+                  <span>{currentUser ? 'Go to Analysis' : 'Get Started Free'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
 
@@ -288,10 +291,10 @@ export default function LandingPage() {
           </p>
           <div className="pt-2">
             <button
-              onClick={() => navigate('/analysis')}
+              onClick={handleCTA}
               className="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-subtle transition-colors inline-flex items-center gap-2"
             >
-              <span>Start Free Analysis</span>
+              <span>{currentUser ? 'Go to Analysis' : 'Get Started Free'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
