@@ -16,7 +16,7 @@ import {
 import { useApp } from '../context/AppContext';
 
 export default function Sidebar({ isOpen, onClose }) {
-  const { userProfile, showToast } = useApp();
+  const { userProfile, currentUser, logout, showToast } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -31,11 +31,24 @@ export default function Sidebar({ isOpen, onClose }) {
     { name: 'Profile', path: '/profile', icon: User },
   ];
 
-  const handleLogoutClick = () => {
-    showToast('Logged out of demo session. Redirecting to home...', 'info');
-    setTimeout(() => {
+  const displayName = userProfile?.name || currentUser?.name || '';
+  const targetRole = userProfile?.targetRole || '';
+  const initials = displayName
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join('') || '?';
+
+  const handleLogoutClick = async () => {
+    try {
+      if (logout) await logout();
+      showToast('Signed out.', 'info');
       navigate('/');
-    }, 600);
+    } catch (err) {
+      showToast(err?.message || 'Sign out failed. Please try again.', 'error');
+    }
   };
 
   return (
@@ -114,15 +127,17 @@ export default function Sidebar({ isOpen, onClose }) {
             className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-100/70 transition-colors group mb-1.5"
           >
             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs text-white shrink-0">
-              SJ
+              {initials}
             </div>
             <div className="flex-1 min-w-0">
               <h5 className="text-xs font-semibold text-slate-900 truncate">
-                {userProfile.name}
+                {displayName}
               </h5>
-              <p className="text-[11px] text-slate-500 truncate">
-                {userProfile.targetRole}
-              </p>
+              {targetRole && (
+                <p className="text-[11px] text-slate-500 truncate">
+                  {targetRole}
+                </p>
+              )}
             </div>
           </NavLink>
 

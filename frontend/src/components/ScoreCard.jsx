@@ -1,7 +1,11 @@
 import React from 'react';
 import ProgressBar from './ProgressBar';
 
-export default function ScoreCard({ title, score, icon: Icon, weight, summary, onClick, active = false }) {
+export default function ScoreCard({ title, score, icon: Icon, weight, summary, onClick, active = false, emptyLabel = 'N/A' }) {
+  const numericScore = score === null || score === undefined || score === '' ? NaN : Number(score);
+  const hasScore = Number.isFinite(numericScore);
+  const displayScore = hasScore ? Math.round(numericScore) : null;
+
   const getScoreColor = (s) => {
     if (s >= 80) return 'text-emerald-600';
     if (s >= 70) return 'text-blue-600';
@@ -28,13 +32,13 @@ export default function ScoreCard({ title, score, icon: Icon, weight, summary, o
             {weight && <p className="text-xs text-slate-500 mt-0.5">{weight}</p>}
           </div>
         </div>
-        <span className={`text-2xl font-bold font-display ${getScoreColor(score)}`}>
-          {score}%
+        <span className={`text-2xl font-bold font-display ${hasScore ? getScoreColor(displayScore) : 'text-slate-400'}`}>
+          {hasScore ? `${displayScore}%` : emptyLabel}
         </span>
       </div>
 
       <div className="mt-4">
-        <ProgressBar value={score} showPercentage={false} height="h-1.5" />
+        <ProgressBar value={hasScore ? displayScore : null} showPercentage={false} height="h-1.5" />
       </div>
 
       {summary && (

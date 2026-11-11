@@ -1,0 +1,243 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum AnalysisStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum RecommendationCategory {
+  IMPROVE
+  LEARN_ADD
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum RecommendationStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum EnhancementStatus {
+  DRAFT
+  COMPLETED
+  ARCHIVED
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+model User {
+  id           String             @id @default(uuid())
+  email        String             @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  resumes           Resume[]
+  jobDescriptions   JobDescription[]
+  analyses          JobAnalysis[]
+  enhancements      ResumeEnhancement[]
+  interviewSessions InterviewSession[]
+
+  @@map("users")
+}
+
+model Resume {
+  id               String             @id @default(uuid())
+  userId           String
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  originalFilename String
+  storedFilename   String
+  mimeType         String
+  fileSize         Int
+  storagePath      String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  analyses          JobAnalysis[]
+  enhancements      ResumeEnhancement[]
+  interviewSessions InterviewSession[]
+
+  @@index([userId])
+  @@map("resumes")
+}
+
+model JobDescription {
+  id                     String             @id @default(uuid())
+  userId                 String
+  user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title                  String
+  companyName            String?
+  description            String
+  requiredSkills         String[]           @default([])
+  preferredSkills        String[]           @default([])
+  experienceRequirements String?
+  educationRequirements  String?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+
+  analyses          JobAnalysis[]
+  enhancements      ResumeEnhancement[]
+  interviewSessions InterviewSession[]
+
+  @@index([userId])
+  @@map("job_descriptions")
+}
+
+model JobAnalysis {
+  id                   String                   @id @default(uuid())
+  userId               String
+  user                 User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumeId             String
+  resume               Resume                   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  jobDescriptionId     String
+  jobDescription       JobDescription           @relation(fields: [jobDescriptionId], references: [id], onDelete: Cascade)
+  status               AnalysisStatus           @default(PENDING)
+  overallScore         Float?
+  skillsScore          Float?
+  experienceScore      Float?
+  keywordsScore        Float?
+  educationScore       Float?
+  projectRelevanceScore Float?
+  strengths            String[]                 @default([])
+  weaknesses           String[]                 @default([])
+  suggestions          String[]                 @default([])
+  missingSkills        String[]                 @default([])
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
+
+  recommendations   AnalysisRecommendation[]
+  interviewSessions InterviewSession[]
+
+  @@index([userId])
+  @@index([resumeId])
+  @@index([jobDescriptionId])
+  @@map("job_analyses")
+}
+
+model AnalysisRecommendation {
+  id          String                 @id @default(uuid())
+  analysisId  String
+  analysis    JobAnalysis            @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  category    RecommendationCategory
+  title       String
+  description String
+  reason      String?
+  priority    Priority               @default(MEDIUM)
+  status      RecommendationStatus   @default(NOT_STARTED)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+
+  @@index([analysisId])
+  @@map("analysis_recommendations")
+}
+
+model ResumeEnhancement {
+  id                  String            @id @default(uuid())
+  userId              String
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumeId            String
+  resume              Resume            @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  jobDescriptionId    String
+  jobDescription      JobDescription    @relation(fields: [jobDescriptionId], references: [id], onDelete: Cascade)
+  version             Int               @default(1)
+  enhancedContent     String?
+  documentStoragePath String?
+  status              EnhancementStatus @default(DRAFT)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([resumeId])
+  @@index([jobDescriptionId])
+  @@map("resume_enhancements")
+}
+
+model InterviewSession {
+  id               String            @id @default(uuid())
+  userId           String
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumeId         String
+  resume           Resume            @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  jobDescriptionId String
+  jobDescription   JobDescription    @relation(fields: [jobDescriptionId], references: [id], onDelete: Cascade)
+  analysisId       String?
+  analysis         JobAnalysis?      @relation(fields: [analysisId], references: [id], onDelete: SetNull)
+  totalQuestions   Int               @default(5)
+  status           InterviewStatus   @default(SCHEDULED)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  questions InterviewQuestion[]
+  answers   InterviewAnswer[]
+
+  @@index([userId])
+  @@index([resumeId])
+  @@index([jobDescriptionId])
+  @@map("interview_sessions")
+}
+
+model InterviewQuestion {
+  id           String             @id @default(uuid())
+  sessionId    String
+  session      InterviewSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  questionText String
+  order        Int
+  category     String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  answer     InterviewAnswer?
+  evaluation InterviewEvaluation?
+
+  @@index([sessionId])
+  @@map("interview_questions")
+}
+
+model InterviewAnswer {
+  id          String            @id @default(uuid())
+  sessionId   String
+  session     InterviewSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  questionId  String            @unique
+  question    InterviewQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answerText  String
+  submittedAt DateTime          @default(now())
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([sessionId])
+  @@map("interview_answers")
+}
+
+model InterviewEvaluation {
+  id          String            @id @default(uuid())
+  questionId  String            @unique
+  question    InterviewQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  score       Float?
+  feedback    String?
+  isMock      Boolean           @default(true)
+  evaluatedAt DateTime          @default(now())
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@map("interview_evaluations")
+}
