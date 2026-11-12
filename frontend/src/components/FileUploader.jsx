@@ -1,15 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { UploadCloud, FileText, X, CheckCircle, RefreshCw } from 'lucide-react';
-import { mockDefaultResumeFile } from '../data/mockResume';
+import { UploadCloud, FileText, X, Loader2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { DEMO_MODE } from '../config/demoMode';
-import ProgressBar from './ProgressBar';
 
 export default function FileUploader({ currentFile, onFileSelected, onFileRemoved, onError }) {
   const { uploadResume } = useApp();
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(100);
   const fileInputRef = useRef(null);
 
   const handleDragOver = (e) => {
@@ -31,20 +27,17 @@ export default function FileUploader({ currentFile, onFileSelected, onFileRemove
       return;
     }
 
+    if (isUploading) return;
     setIsUploading(true);
-    setUploadProgress(20);
 
     try {
-      setUploadProgress(60);
       const uploaded = await uploadResume(file);
-      setUploadProgress(100);
       setIsUploading(false);
       onFileSelected(uploaded);
     } catch {
       // Upload failed: the context already shows an error toast.
       // Leave the file unselected; do not fabricate a local "uploaded" file.
       setIsUploading(false);
-      setUploadProgress(0);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -63,10 +56,6 @@ export default function FileUploader({ currentFile, onFileSelected, onFileRemove
     }
   };
 
-  const handleResetToDemo = () => {
-    onFileSelected(mockDefaultResumeFile);
-  };
-
   return (
     <div className="w-full">
       {!currentFile ? (
@@ -74,7 +63,7 @@ export default function FileUploader({ currentFile, onFileSelected, onFileRemove
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => !isUploading && fileInputRef.current?.click()}
           className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-150 ${
             isDragging
               ? 'border-blue-600 bg-blue-50/60'
@@ -89,6 +78,13 @@ export default function FileUploader({ currentFile, onFileSelected, onFileRemove
             className="hidden"
           />
 
+          {isUploading ? (
+            <div className="flex flex-col items-center justify-center py-2" role="status">
+              <Loader2 className="w-6 h-6 animate-spin text-blue-600 mb-2" />
+              <p className="text-sm font-semibold text-slate-800">Uploading and extracting text…</p>
+              <p className="text-xs text-slate-500 mt-1">This usually takes a few seconds.</p>
+            </div>
+          ) : (
           <div className="flex flex-col items-center justify-center">
             <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center mb-3">
               <UploadCloud className="w-6 h-6" />
@@ -110,6 +106,7 @@ export default function FileUploader({ currentFile, onFileSelected, onFileRemove
               </span>
             </div>
           </div>
+          )}
         </div>
       ) : (
         <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-card">
@@ -123,9 +120,6 @@ export default function FileUploader({ currentFile, onFileSelected, onFileRemove
                   <h4 className="text-sm font-semibold text-slate-900 break-all">
                     {currentFile.name}
                   </h4>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3 text-emerald-600" /> Ready
-                  </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Size: <span className="text-slate-700 font-medium">{currentFile.size}</span> • Uploaded: <span className="text-slate-700 font-medium">{currentFile.lastModified || 'Today'}</span>
@@ -134,16 +128,6 @@ export default function FileUploader({ currentFile, onFileSelected, onFileRemove
             </div>
 
             <div className="flex items-center gap-1.5">
-              {DEMO_MODE && (
-                <button
-                  type="button"
-                  onClick={handleResetToDemo}
-                  title="Reload default sample resume"
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                </button>
-              )}
               <button
                 type="button"
                 onClick={onFileRemoved}
@@ -155,11 +139,6 @@ export default function FileUploader({ currentFile, onFileSelected, onFileRemove
             </div>
           </div>
 
-          {isUploading && (
-            <div className="mt-3.5 pt-3 border-t border-slate-100">
-              <ProgressBar value={uploadProgress} label="Uploading file..." height="h-1.5" />
-            </div>
-          )}
         </div>
       )}
     </div>

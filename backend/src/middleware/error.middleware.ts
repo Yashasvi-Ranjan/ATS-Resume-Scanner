@@ -67,7 +67,14 @@ export const errorHandler = (
       ? [{ stack: (err as Error).stack }]
       : [];
 
-  console.error('Unhandled error:', err);
+  // Never log the raw error object or request data: ORM/validation messages can embed user content.
+  const e = err as { name?: unknown; message?: unknown; code?: unknown; stack?: unknown };
+  const isDb = /^PrismaClient/.test(String(e?.name ?? ''));
+  const msg = isDb ? '(database error message omitted)' : String(e?.message ?? '').replace(/\s+/g, ' ').slice(0, 200);
+  const stackTop = String(e?.stack ?? '').split('\n').find((l) => l.trim().startsWith('at '))?.trim().slice(0, 200);
+  console.error(
+    `Unhandled error: ${String(e?.name ?? 'Error')}${e?.code ? ` [${String(e.code)}]` : ''}: ${msg}${stackTop ? ` (${stackTop})` : ''}`
+  );
   ApiResponse.error(res, errorMessage, 500, errors);
 };
 

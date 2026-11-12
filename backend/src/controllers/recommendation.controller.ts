@@ -40,4 +40,26 @@ export class RecommendationController {
       next(error);
     }
   }
+
+  static async getGapAnalysis(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const data = await RecommendationService.getGapAnalysis(req.user!.id, req.params.id as string);
+      ApiResponse.success(res, 'Gap analysis retrieved successfully', data);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async generate(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const data = await RecommendationService.generate(
+        req.user!.id,
+        req.params.id as string,
+        Boolean(req.body?.force)
+      );
+      ApiResponse.success(res, 'Recommendations generated successfully', data);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

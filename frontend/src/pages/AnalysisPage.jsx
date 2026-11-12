@@ -1,18 +1,17 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  ArrowRight,
-  Loader2,
-  RotateCcw,
-  CheckCircle
-} from 'lucide-react';
+import { ArrowRight, Loader2, RotateCcw, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { mockApi } from '../services/mockApi';
 import { api } from '../services/api';
-import { presetJobDescriptions } from '../data/mockJobDescription';
+import { describeApiError } from '../utils/errors';
+import { buildAnalysisSummary } from '../utils/analysis';
+import { useAnalysisPolling } from '../hooks/useAnalysisPolling';
 import FileUploader from '../components/FileUploader';
-import LoadingModal from '../components/LoadingModal';
-import { DEMO_MODE } from '../config/demoMode';
+import ResumeParsedPanel from '../components/ResumeParsedPanel';
+import JdParsedPanel from '../components/JdParsedPanel';
+
+const inputCls =
+  'w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none';
 
 export default function AnalysisPage() {
   const navigate = useNavigate();
@@ -21,395 +20,276 @@ export default function AnalysisPage() {
     setResumeFile,
     jobDescription,
     setJobDescription,
+    activeJd,
+    setActiveJd,
+    analysisResult,
     setAnalysisResult,
     fetchBackendHistory,
     showToast
   } = useApp();
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadingStep, setLoadingStep] = useState(1);
-  const [loadingPercent, setLoadingPercent] = useState(0);
-  const [loadingMessage, setLoadingMessage] = useState('Initializing scan...');
-  const [selectedPreset, setSelectedPreset] = useState('');
-  const [jobTitle, setJobTitle] = useState('');
-  const [companyName, setCompanyName] = useState('');
-  const [requiredSkillsInput, setRequiredSkillsInput] = useState('');
-
-  const inFlightRef = useRef(false);
-  const savedAnalysisRef = useRef(null);
-  const pendingJdRef = useRef(null);
+  const [jobTitle, setJobTitle] = useState(activeJd?.title || '');
+  const [companyName, setCompanyName] = useState(activeJd?.companyName || '');
+  const [skillsInput, setSkillsInput] = useState('');
+  const [savingJd, setSavingJd] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [retrying, setRetrying] = useState(false);
+  const [runError, setRunError] = useState(null);
+  const [runId, setRunId] = useState(
+    analysisResult && (analysisResult.status === 'PENDING' || analysisResult.status === 'PROCESSING')
+      ? analysisResult.id
+      : null
+  );
+  const inFlight = useRef(false);
+  const navigatedFor = useRef(null);
 
   const jdText = jobDescription || '';
+  const fingerprint = JSON.stringify([jobTitle.trim(), companyName.trim(), skillsInput.trim(), jdText.trim()]);
+  const jdUpToDate = activeJd && activeJd.fingerprint === fingerprint;
 
-  const handlePresetChange = (presetId) => {
-    setSelectedPreset(presetId);
-    const preset = presetJobDescriptions.find((p) => p.id === presetId);
-    if (preset) {
-      setJobDescription(preset.content);
-      setJobTitle(preset.title || '');
-      setCompanyName(preset.company || '');
-      showToast(`Loaded sample "${preset.title}" job description.`, 'info');
+  const { analysis, error: pollError, timedOut, isPolling, restart } = useAnalysisPolling(runId);
+  const status = analysis?.status || (runId ? 'PENDING' : null);
+
+  // react to terminal states
+  useEffect(() => {
+    if (!analysis) return;
+    setAnalysisResult(buildAnalysisSummary(analysis));
+    if (analysis.status === 'COMPLETED' && navigatedFor.current !== analysis.id) {
+      navigatedFor.current = analysis.id;
+      showToast('Analysis complete.', 'success');
+      if (fetchBackendHistory) Promise.resolve(fetchBackendHistory()).catch(() => {});
+      navigate(`/analysis/results/${analysis.id}`);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analysis]);
 
-  const handleClearJD = () => {
-    setJobDescription('');
-    showToast('Job description cleared.', 'info');
-  };
-
-  const describeApiError = (err, step) => {
-    let detail;
-    if (Array.isArray(err?.errors) && err.errors.length > 0) {
-      detail = err.errors.map((e) => `${e.field}: ${e.message}`).join('; ');
-    } else if (err?.status === 401) {
-      detail = 'Your session has expired. Please sign in again.';
-    } else if (err?.status === 403) {
-      detail = "You don't have access to that resume or job description.";
-    } else if (err?.status === 404 && /resume not found/i.test(err.message || '')) {
-      detail = 'The uploaded resume could not be found on the server. Please upload it again.';
-      setResumeFile(null);
-    } else if (!err?.status && err?.name === 'TypeError') {
-      detail = 'Could not reach the server. Check your connection and try again.';
-    } else {
-      detail = err?.message || 'Something went wrong. Please try again.';
-    }
-    const prefix =
-      step === 'jd'
-        ? 'Could not save the job description: '
-        : step === 'analysis'
-        ? 'Job description saved, but the analysis request failed: '
-        : '';
-    return `${prefix}${detail}`;
-  };
-
-  const handleStartAnalysis = async () => {
-    if (inFlightRef.current) return;
-
-    if (DEMO_MODE) {
-      if (!resumeFile) {
-        showToast('Please upload your resume before continuing.', 'error');
-        return;
-      }
-    } else if (!resumeFile?.id) {
-      showToast('Please upload your resume to the server before continuing.', 'error');
-      return;
-    }
-    if (!jdText || jdText.trim().length < 30) {
-      showToast('Please provide a job description (at least 30 characters).', 'warning');
-      return;
-    }
-
-    // DEMO_MODE only: local sample analysis, no backend writes.
-    if (DEMO_MODE) {
-      inFlightRef.current = true;
-      setIsLoading(true);
-      setLoadingStep(1);
-      setLoadingPercent(10);
-      setLoadingMessage('Reading resume file...');
-      try {
-        const result = await mockApi.analyzeResume(
-          resumeFile,
-          jdText,
-          ({ step, percent, message }) => {
-            setLoadingStep(step);
-            setLoadingPercent(percent);
-            setLoadingMessage(message);
-          }
-        );
-        setAnalysisResult(result.data);
-        showToast('Demo analysis loaded (sample data, not saved).', 'info');
-        navigate('/analysis/results');
-      } catch (err) {
-        showToast(err.message || 'Analysis failed. Please try again.', 'error');
-      } finally {
-        inFlightRef.current = false;
-        setIsLoading(false);
-      }
-      return;
-    }
-
+  const handleSaveJd = async () => {
+    if (inFlight.current) return;
     const title = jobTitle.trim();
-    const company = companyName.trim();
-    const description = jdText.trim();
-    const requiredSkills = requiredSkillsInput
-      .split(',')
-      .map((skill) => skill.trim())
-      .filter(Boolean);
-
-    if (title.length < 2) {
-      showToast('Please enter the job title (at least 2 characters).', 'warning');
-      return;
-    }
-    if (requiredSkills.length === 0) {
-      showToast('Please enter at least one required skill (comma-separated).', 'warning');
-      return;
-    }
-
-    inFlightRef.current = true;
-    setIsLoading(true);
-
-    const jdFingerprint = JSON.stringify([title, company, requiredSkills, description]);
-    const fullFingerprint = JSON.stringify([resumeFile.id, jdFingerprint]);
-
+    if (title.length < 2) return showToast('Please enter the job title (at least 2 characters).', 'warning');
+    if (jdText.trim().length < 30) return showToast('Please paste the job description (at least 30 characters).', 'warning');
+    inFlight.current = true;
+    setSavingJd(true);
     try {
-      // Same inputs already saved: go to the existing analysis instead of duplicating it.
-      const existing = savedAnalysisRef.current;
-      if (existing && existing.fingerprint === fullFingerprint) {
-        showToast('This analysis request was already saved.', 'info');
-        navigate(`/analysis/results/${existing.analysisId}`);
-        return;
-      }
-
-      // Reuse a previously saved JD if an earlier attempt failed after creating it.
-      let jdId;
-      const pending = pendingJdRef.current;
-      if (pending && pending.fingerprint === jdFingerprint) {
-        jdId = pending.id;
-      } else {
-        pendingJdRef.current = null;
-        let savedJd;
-        try {
-          const jdPayload = { title, description, requiredSkills };
-          if (company) jdPayload.companyName = company;
-          const jdResponse = await api.jobDescriptions.create(jdPayload);
-          savedJd = jdResponse?.data ?? jdResponse;
-          if (!savedJd?.id) {
-            throw new Error('The server did not return a job description id.');
-          }
-        } catch (err) {
-          showToast(describeApiError(err, 'jd'), 'error');
-          return;
-        }
-        jdId = savedJd.id;
-        pendingJdRef.current = { id: jdId, fingerprint: jdFingerprint };
-      }
-
-      let created;
-      try {
-        // No scores are sent: the backend stores them as null until scoring exists.
-        const analysisResponse = await api.analyses.create({
-          resumeId: resumeFile.id,
-          jobDescriptionId: jdId
-        });
-        created = analysisResponse?.data ?? analysisResponse;
-        if (!created?.id) {
-          throw new Error('The server did not return an analysis id.');
-        }
-      } catch (err) {
-        showToast(describeApiError(err, 'analysis'), 'error');
-        return;
-      }
-
-      pendingJdRef.current = null;
-      savedAnalysisRef.current = { fingerprint: fullFingerprint, analysisId: created.id };
-
-      setAnalysisResult({
-        id: created.id,
-        jobTitle: title,
-        company: company || '',
-        scanDate: new Date().toISOString().split('T')[0],
-        fileName: resumeFile.name,
-        overallScore: null,
-        verdict: null,
-        explanation: null,
-        breakdown: [],
-        strengths: [],
-        improvements: [],
-        learnAndAdd: [],
-        status: created.status || 'PENDING'
+      const payload = { title, description: jdText.trim(), parse: true };
+      if (companyName.trim()) payload.companyName = companyName.trim();
+      const skills = skillsInput.split(',').map((s) => s.trim()).filter(Boolean);
+      if (skills.length) payload.requiredSkills = skills;
+      const res = await api.jobDescriptions.create(payload);
+      const jd = res?.data;
+      if (!jd?.id) throw new Error('The server did not return a job description id.');
+      setActiveJd({
+        id: jd.id,
+        title: jd.title,
+        companyName: jd.companyName || '',
+        parseStatus: jd.parseStatus || 'NOT_PARSED',
+        parseError: jd.parseError || null,
+        fingerprint
       });
-      showToast('Analysis saved. Scoring is not available yet.', 'success');
-      navigate(`/analysis/results/${created.id}`);
-
-      if (fetchBackendHistory) {
-        Promise.resolve(fetchBackendHistory()).catch(console.error);
-      }
+      setRunId(null);
+      setRunError(null);
+    } catch (err) {
+      showToast(describeApiError(err), 'error');
     } finally {
-      inFlightRef.current = false;
-      setIsLoading(false);
+      inFlight.current = false;
+      setSavingJd(false);
     }
   };
+
+  const handleStart = async () => {
+    if (inFlight.current) return;
+    if (!resumeFile?.id) return showToast('Please upload your resume first.', 'warning');
+    if (!activeJd?.id) return showToast('Please save the job description first.', 'warning');
+    inFlight.current = true;
+    setStarting(true);
+    setRunError(null);
+    try {
+      const res = await api.analyses.create({ resumeId: resumeFile.id, jobDescriptionId: activeJd.id });
+      const rec = res?.data;
+      if (!rec?.id) throw new Error('The server did not return an analysis id.');
+      navigatedFor.current = null;
+      setAnalysisResult(buildAnalysisSummary(rec));
+      setRunId(rec.id);
+    } catch (err) {
+      setRunError(describeApiError(err));
+      if (err?.status === 404 && /resume/i.test(err.message || '')) setResumeFile(null);
+    } finally {
+      inFlight.current = false;
+      setStarting(false);
+    }
+  };
+
+  const handleRetry = async () => {
+    if (!runId || retrying) return;
+    setRetrying(true);
+    try {
+      await api.analyses.retry(runId);
+      navigatedFor.current = null;
+      restart();
+    } catch (err) {
+      setRunError(describeApiError(err));
+    } finally {
+      setRetrying(false);
+    }
+  };
+
+  const busyRun = starting || status === 'PENDING' || status === 'PROCESSING';
+  const canStart =
+    !!resumeFile?.id && !!activeJd?.id && resumeFile.parseStatus !== 'PROCESSING' && resumeFile.extractedTextLength !== 0 && !busyRun;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
       <div className="space-y-1">
-        <h2 className="text-xl lg:text-2xl font-bold text-slate-900 font-display">
-          Resume & Job Description Analysis
-        </h2>
+        <h2 className="text-xl lg:text-2xl font-bold text-slate-900 font-display">Resume & Job Description Analysis</h2>
         <p className="text-xs sm:text-sm text-slate-600">
-          {DEMO_MODE
-            ? 'Upload your resume and paste the target job description to generate an explainable ATS match score.'
-            : 'Save your resume and job description. Scoring is not available yet.'}
+          Upload your resume and paste the target job description to get an explainable estimated ATS/job match score.
         </p>
       </div>
 
-      <div className="space-y-5">
-        {/* Step 1: Resume Upload */}
-        <div className="bg-white rounded-xl p-5 lg:p-6 border border-slate-200 shadow-card">
-          <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-slate-100">
-            <div className="flex items-center gap-2.5">
-              <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold font-display">
-                1
-              </span>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">
-                  Upload Candidate Resume
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Select or drag your PDF/DOCX resume file
-                </p>
-              </div>
+      {/* Step 1 */}
+      <div className="bg-white rounded-xl p-5 lg:p-6 border border-slate-200 shadow-card">
+        <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold font-display">1</span>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Upload Candidate Resume</h3>
+              <p className="text-xs text-slate-500">Select or drag your PDF/DOCX resume file (text-based; scanned images are not supported)</p>
             </div>
-            {resumeFile && (
-              <span className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-medium flex items-center gap-1">
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> {DEMO_MODE ? 'Ready to scan' : 'Ready to save'}
-              </span>
-            )}
           </div>
-
-          <FileUploader
-            currentFile={resumeFile}
-            onFileSelected={(file) => {
-              setResumeFile(file);
-              showToast(`Loaded ${file.name}`, 'success');
-            }}
-            onFileRemoved={() => {
-              setResumeFile(null);
-              showToast('Resume removed. Please select or upload a resume.', 'warning');
-            }}
-            onError={(msg) => showToast(msg, 'error')}
-          />
+          {resumeFile?.parseStatus === 'PARSED' && (
+            <span className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-medium flex items-center gap-1">
+              <CheckCircle className="w-3.5 h-3.5" /> Parsed
+            </span>
+          )}
         </div>
+        <FileUploader
+          currentFile={resumeFile}
+          onFileSelected={() => {}}
+          onFileRemoved={() => {
+            setResumeFile(null);
+            setRunId(null);
+          }}
+          onError={(msg) => showToast(msg, 'error')}
+        />
+        {resumeFile?.id && <ResumeParsedPanel resume={resumeFile} />}
+      </div>
 
-        {/* Step 2: Job Description */}
-        <div className="bg-white rounded-xl p-5 lg:p-6 border border-slate-200 shadow-card">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 mb-4 border-b border-slate-100 gap-2.5">
-            <div className="flex items-center gap-2.5">
-              <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold font-display">
-                2
-              </span>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">
-                  Target Job Description
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Paste the requirements and responsibilities for the target position
-                </p>
-              </div>
+      {/* Step 2 */}
+      <div className="bg-white rounded-xl p-5 lg:p-6 border border-slate-200 shadow-card">
+        <div className="flex items-center gap-2.5 pb-3.5 mb-4 border-b border-slate-100">
+          <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold font-display">2</span>
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">Target Job Description</h3>
+            <p className="text-xs text-slate-500">Paste the real posting. Title is required; skills are optional and are extracted automatically.</p>
+          </div>
+        </div>
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-700">Job Title *</label>
+              <input className={inputCls} value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} placeholder="e.g. Frontend Developer" />
             </div>
-
-            {/* Presets selector */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500">Sample JD:</span>
-              <select
-                value={selectedPreset}
-                onChange={(e) => handlePresetChange(e.target.value)}
-                className="bg-white border border-slate-300 text-slate-800 text-xs rounded-lg px-2.5 py-1.5 focus:border-blue-500 focus:outline-none"
-              >
-                <option value="">Select a sample...</option>
-                {presetJobDescriptions.map((preset) => (
-                  <option key={preset.id} value={preset.id}>
-                    {preset.title} ({preset.company})
-                  </option>
-                ))}
-              </select>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-700">Company (optional)</label>
+              <input className={inputCls} value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="e.g. Acme Corp" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-700">Required skills (optional)</label>
+              <input className={inputCls} value={skillsInput} onChange={(e) => setSkillsInput(e.target.value)} placeholder="Comma-separated hints" />
             </div>
           </div>
-
-          {/* Text Area */}
-          <div className="space-y-3">
-            {!DEMO_MODE && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Job Title</label>
-                  <input
-                    type="text"
-                    value={jobTitle}
-                    onChange={(e) => setJobTitle(e.target.value)}
-                    placeholder="e.g. Frontend Developer"
-                    className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Company (optional)</label>
-                  <input
-                    type="text"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                    placeholder="e.g. Acme Corp"
-                    className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Required Skills</label>
-                  <input
-                    type="text"
-                    value={requiredSkillsInput}
-                    onChange={(e) => setRequiredSkillsInput(e.target.value)}
-                    placeholder="Comma-separated, e.g. React, SQL"
-                    className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-            )}
-            <textarea
-              rows={8}
-              value={jdText}
-              onChange={(e) => setJobDescription(e.target.value)}
-              placeholder="Paste complete job description here, including responsibilities, required skills, and qualification requirements..."
-              className="w-full bg-white border border-slate-300 rounded-lg p-3.5 text-xs lg:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none font-mono leading-relaxed"
-            />
-
-            <div className="flex items-center justify-between text-xs text-slate-500">
-              <div className="flex items-center gap-2">
-                <span>Characters: <strong className="text-slate-800">{jdText.length}</strong></span>
-                {jdText.length < 30 && (
-                  <span className="text-rose-600 text-[11px]">(Minimum 30 characters required)</span>
-                )}
-              </div>
+          <textarea
+            rows={8}
+            value={jdText}
+            onChange={(e) => setJobDescription(e.target.value)}
+            placeholder="Paste complete job description here, including responsibilities, required skills, and qualification requirements..."
+            className="w-full bg-white border border-slate-300 rounded-lg p-3.5 text-xs lg:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none font-mono leading-relaxed"
+          />
+          <div className="flex items-center justify-between text-xs text-slate-500">
+            <span>
+              Characters: <strong className="text-slate-800">{jdText.length}</strong>
+              {jdText.length < 30 && <span className="text-rose-600 text-[11px]"> (minimum 30 required)</span>}
+            </span>
+            <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={handleClearJD}
-                className="text-slate-500 hover:text-rose-600 transition-colors flex items-center gap-1 cursor-pointer"
+                onClick={() => { setJobDescription(''); setJobTitle(''); setCompanyName(''); setSkillsInput(''); setActiveJd(null); setRunId(null); }}
+                className="text-slate-500 hover:text-rose-600 flex items-center gap-1 cursor-pointer"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Clear</span>
+                <RotateCcw className="w-3.5 h-3.5" /> Clear
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveJd}
+                disabled={savingJd || jdUpToDate}
+                className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+              >
+                {savingJd && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                {savingJd ? 'Saving & parsing…' : jdUpToDate ? 'Saved' : activeJd ? 'Save as new job description' : 'Save & parse job description'}
               </button>
             </div>
           </div>
         </div>
+        {activeJd?.id && <JdParsedPanel jd={activeJd} />}
+      </div>
 
-        {/* Submit Analyze Button */}
-        <div className="flex items-center justify-end gap-3 pt-1">
+      {/* Step 3 */}
+      <div className="bg-white rounded-xl p-5 lg:p-6 border border-slate-200 shadow-card space-y-3">
+        <div className="flex items-center gap-2.5">
+          <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold font-display">3</span>
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">Run Analysis</h3>
+            <p className="text-xs text-slate-500">Scores are estimates computed on the server from your parsed resume and the job description.</p>
+          </div>
+        </div>
+
+        {(status === 'PENDING' || status === 'PROCESSING') && (
+          <p className="text-xs text-slate-700 flex items-center gap-2" role="status">
+            <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+            {status === 'PENDING' ? 'Analysis queued…' : 'Analysis in progress…'} This can take up to a minute.
+          </p>
+        )}
+        {timedOut && (
+          <p className="text-xs text-amber-700" role="alert">
+            Still working after several minutes. You can leave this page; the result will appear in your history when ready.
+          </p>
+        )}
+        {pollError && (
+          <p className="text-xs text-rose-700" role="alert">Lost contact while checking progress: {describeApiError(pollError)}</p>
+        )}
+        {status === 'FAILED' && (
+          <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-700 space-y-2" role="alert">
+            <p className="flex items-center gap-1.5 font-semibold"><AlertTriangle className="w-3.5 h-3.5" /> Analysis failed</p>
+            <p>{analysis?.errorMessage || 'The analysis could not be completed.'}</p>
+            <button type="button" onClick={handleRetry} disabled={retrying} className="px-3 py-1.5 rounded-lg bg-white border border-rose-300 font-semibold disabled:opacity-50 cursor-pointer">
+              {retrying ? 'Retrying…' : 'Retry analysis'}
+            </button>
+          </div>
+        )}
+        {runError && <p className="text-xs text-rose-700" role="alert">{runError}</p>}
+        {!resumeFile?.id && <p className="text-[11px] text-slate-500">Upload a resume to continue.</p>}
+        {resumeFile?.id && !activeJd?.id && <p className="text-[11px] text-slate-500">Save the job description to continue.</p>}
+        {resumeFile?.id && resumeFile.parseStatus !== 'PARSED' && resumeFile.extractedTextLength !== 0 && (
+          <p className="text-[11px] text-amber-700">
+            The resume is not parsed yet; the server will try to parse it during the analysis, which needs the AI service.
+          </p>
+        )}
+
+        <div className="flex justify-end">
           <button
             type="button"
-            onClick={handleStartAnalysis}
-            disabled={isLoading}
-            className="w-full sm:w-auto px-7 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-subtle flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+            onClick={handleStart}
+            disabled={!canStart}
+            className="w-full sm:w-auto px-7 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-subtle flex items-center justify-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
           >
-            {isLoading && !DEMO_MODE ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Saving…</span>
-              </>
+            {busyRun || isPolling ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /><span>Analyzing…</span></>
             ) : (
-              <>
-                <span>{DEMO_MODE ? 'Analyze Resume' : 'Save Analysis Request'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
+              <><span>Run Analysis</span><ArrowRight className="w-4 h-4" /></>
             )}
           </button>
         </div>
       </div>
-
-      {/* Loading Modal (demo mode only) */}
-      <LoadingModal
-        isOpen={DEMO_MODE && isLoading}
-        currentStep={loadingStep}
-        percent={loadingPercent}
-        statusMessage={loadingMessage}
-      />
     </div>
   );
 }

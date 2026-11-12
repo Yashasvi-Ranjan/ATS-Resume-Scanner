@@ -37,6 +37,13 @@ enum EnhancementStatus {
   ARCHIVED
 }
 
+enum ParseStatus {
+  NOT_PARSED
+  PROCESSING
+  PARSED
+  FAILED
+}
+
 enum InterviewStatus {
   SCHEDULED
   IN_PROGRESS
@@ -70,6 +77,15 @@ model Resume {
   mimeType         String
   fileSize         Int
   storagePath      String
+  // --- AI parsing (additive) ---
+  extractedText    String?            @db.Text
+  parseStatus      ParseStatus        @default(NOT_PARSED)
+  parseError       String?
+  parsedData       Json?              // validated structured resume produced by the parser
+  userEditedData   Json?              // user corrections; takes precedence over parsedData
+  parsedAt         DateTime?
+  parserVersion    String?
+  contentHash      String?            // sha256 of the stored file, for cache invalidation
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
 
@@ -92,6 +108,14 @@ model JobDescription {
   preferredSkills        String[]           @default([])
   experienceRequirements String?
   educationRequirements  String?
+  // --- AI parsing (additive) ---
+  parseStatus            ParseStatus        @default(NOT_PARSED)
+  parseError             String?
+  parsedData             Json?
+  userEditedData         Json?
+  parsedAt               DateTime?
+  parserVersion          String?
+  descriptionHash        String?
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
 
@@ -122,6 +146,14 @@ model JobAnalysis {
   weaknesses           String[]                 @default([])
   suggestions          String[]                 @default([])
   missingSkills        String[]                 @default([])
+  // --- AI results (additive) ---
+  resultData           Json?                    // full explainable result: weights, matched/partial/missing, evidence, explanations
+  errorMessage         String?
+  scoringVersion       String?
+  modelInfo            String?                  // provider/model/prompt versions used
+  inputHash            String?                  // hash of resume+JD+config for caching
+  startedAt            DateTime?
+  completedAt          DateTime?
   createdAt            DateTime                 @default(now())
   updatedAt            DateTime                 @updatedAt
 
@@ -144,6 +176,9 @@ model AnalysisRecommendation {
   reason      String?
   priority    Priority               @default(MEDIUM)
   status      RecommendationStatus   @default(NOT_STARTED)
+  // --- AI (additive) ---
+  source      String                 @default("USER") // USER | AI
+  details     Json?                  // relatedRequirement, evidence, suggestedAction, learningTopics, exercise, ...
   createdAt   DateTime               @default(now())
   updatedAt   DateTime               @updatedAt
 
@@ -163,6 +198,16 @@ model ResumeEnhancement {
   enhancedContent     String?
   documentStoragePath String?
   status              EnhancementStatus @default(DRAFT)
+  // --- AI (additive) ---
+  generationStatus    AnalysisStatus    @default(COMPLETED)
+  source              String            @default("USER") // USER | AI | USER_EDIT
+  parentVersionId     String?
+  structuredContent   Json?             // structured enhanced resume
+  changeMap           Json?             // enhanced item -> original evidence mapping
+  groundingReport     Json?             // validation results + flagged unsupported changes
+  errorMessage        String?
+  modelInfo           String?
+  approvedAt          DateTime?
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
 
@@ -184,6 +229,13 @@ model InterviewSession {
   analysis         JobAnalysis?      @relation(fields: [analysisId], references: [id], onDelete: SetNull)
   totalQuestions   Int               @default(5)
   status           InterviewStatus   @default(SCHEDULED)
+  // --- AI (additive) ---
+  difficulty       String?
+  generationStatus AnalysisStatus    @default(COMPLETED)
+  errorMessage     String?
+  reportData       Json?             // persisted final report
+  reportGeneratedAt DateTime?
+  modelInfo        String?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 
@@ -203,6 +255,10 @@ model InterviewQuestion {
   questionText String
   order        Int
   category     String?
+  difficulty   String?
+  rationale    String?
+  expectedTopics String[]         @default([])
+  source       String             @default("USER") // USER | AI
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
 
@@ -235,6 +291,8 @@ model InterviewEvaluation {
   score       Float?
   feedback    String?
   isMock      Boolean           @default(true)
+  details     Json?             // strengths, weaknesses, missingConcepts, improvedAnswerOutline, topicsToRevise, dimension scores
+  modelInfo   String?
   evaluatedAt DateTime          @default(now())
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt

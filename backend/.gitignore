@@ -9,3 +9,7 @@ uploads/*
 coverage/
 *.log
 .DS_Store
+.env.*
+!.env.example
+*.tsbuildinfo
+.nyc_output/

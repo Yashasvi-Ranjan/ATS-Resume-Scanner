@@ -19,4 +19,8 @@ export const createRecommendationSchema = z.object({
   reason: z.string().trim().optional().nullable(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional().default('MEDIUM'),
   status: z.enum(['NOT_STARTED', 'IN_PROGRESS', 'COMPLETED']).optional().default('NOT_STARTED')
-});
+}).strict(); // `source` / `details` are server-controlled and rejected if sent
+
+export const generateRecommendationsSchema = z.object({
+  force: z.boolean().optional().default(false)
+}).strict();

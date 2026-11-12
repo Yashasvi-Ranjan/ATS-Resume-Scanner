@@ -1,682 +1,306 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  Sparkles,
-  ShieldCheck,
-  Check,
-  X,
-  RotateCw,
-  Download,
-  ArrowRight,
-  Bot,
-  Copy,
-  CheckCheck
-} from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Sparkles, ShieldCheck, Download, ArrowRight, Bot, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { mockApi } from '../services/mockApi';
 import { api } from '../services/api';
-import { DEMO_MODE } from '../config/demoMode';
+import { describeApiError } from '../utils/errors';
 
-function DemoEnhancementView() {
-  const navigate = useNavigate();
-  const {
-    enhancementData,
-    updateSectionStatus,
-    updateBulletStatus,
-    showToast
-  } = useApp();
-
-  const [activeSectionId, setActiveSectionId] = useState('summary');
-  const [isRegenerating, setIsRegenerating] = useState(false);
-  const [copiedId, setCopiedId] = useState(null);
-
-  const sections = enhancementData?.sections || [];
-  const activeSection = sections.find((s) => s.id === activeSectionId) || sections[0];
-
-  const handleRegenerate = async (sectionId) => {
-    if (!DEMO_MODE) {
-      showToast('Regeneration is not available.', 'info');
-      return;
-    }
-    setIsRegenerating(true);
-    try {
-      await mockApi.regenerateSection(sectionId);
-      showToast('Regenerated phrasing with targeted keywords and metrics.', 'success');
-    } catch (err) {
-      showToast('Failed to regenerate section.', 'error');
-    } finally {
-      setIsRegenerating(false);
-    }
-  };
-
-  const handleCopyText = (text, id) => {
-    navigator.clipboard?.writeText(text);
-    setCopiedId(id);
-    showToast('Copied text to clipboard.', 'info');
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  const handleDownloadResume = () => {
-    showToast('Enhanced resume export is not available yet.', 'info');
-  };
-
-  if (!activeSection) {
-    return (
-      <div className="space-y-6">
-        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-card text-center space-y-3">
-          <p className="text-sm text-slate-600">No enhancement suggestions available yet.</p>
-          <button
-            onClick={() => navigate('/analysis')}
-            className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-subtle inline-flex items-center gap-1.5 transition-colors cursor-pointer"
-          >
-            <span>Go to Analysis</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="bg-white rounded-xl p-5 lg:p-6 border border-slate-200 shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-600 uppercase tracking-wider mb-0.5">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Grounded AI Resume Enhancement</span>
-          </div>
-          <h2 className="text-lg lg:text-xl font-bold text-slate-900 font-display">
-            Resume Enhancement & Phrasing Optimization
-          </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Target Role: <strong className="text-slate-800">{enhancementData.targetRole || 'N/A'}</strong>
-            {enhancementData.candidateName && (
-              <> • Candidate: <strong className="text-slate-800">{enhancementData.candidateName}</strong></>
-            )}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          <button
-            onClick={handleDownloadResume}
-            className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-subtle flex items-center gap-1.5 transition-colors"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Download Enhanced Resume</span>
-          </button>
-          <button
-            onClick={() => navigate('/mock-interview')}
-            className="px-4 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold border border-slate-300 flex items-center gap-1.5 transition-colors"
-          >
-            <Bot className="w-3.5 h-3.5 text-blue-600" />
-            <span>Practice Interview</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Mandatory No-Fabrication Trust Banner */}
-      <div className="p-3.5 rounded-lg bg-blue-50 border border-blue-200 flex items-start gap-3">
-        <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-        <div className="text-xs space-y-0.5">
-          <span className="font-bold text-slate-900">
-            Strict No-Fabrication Policy
-          </span>
-          <p className="text-slate-600 leading-relaxed">
-            {enhancementData.noticeText}
-          </p>
-        </div>
-      </div>
-
-      {/* Section Switcher Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-slate-200">
-        {sections.map((sec) => (
-          <button
-            key={sec.id}
-            onClick={() => setActiveSectionId(sec.id)}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 cursor-pointer ${
-              activeSectionId === sec.id
-                ? 'bg-blue-600 text-white shadow-subtle'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <span>{sec.name}</span>
-            {sec.status === 'accepted' && <Check className="w-3 h-3 text-emerald-300" />}
-            {sec.status === 'rejected' && <X className="w-3 h-3 text-rose-300" />}
-          </button>
-        ))}
-      </div>
-
-      {/* Main Diff Comparison Workspace */}
-      <div className="space-y-4">
-        {/* Section Header Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 font-display">
-              {activeSection.name}
-            </h3>
-            <p className="text-xs text-slate-500">
-              Compare original phrasing with ATS-optimized, high-impact phrasing
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => handleRegenerate(activeSection.id)}
-              disabled={isRegenerating}
-              className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium border border-slate-300 flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
-            >
-              <RotateCw className={`w-3.5 h-3.5 ${isRegenerating ? 'animate-spin text-blue-600' : ''}`} />
-              <span>Regenerate Phrasing</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Multi-bullet vs Single Block Rendering */}
-        {activeSection.items ? (
-          /* Multi-bullet Experience / Projects */
-          <div className="space-y-3.5">
-            {activeSection.items.map((bullet, index) => (
-              <div
-                key={bullet.id}
-                className="bg-white rounded-xl p-4 border border-slate-200 shadow-card space-y-3"
-              >
-                <div className="flex items-center justify-between text-xs font-semibold text-slate-500 border-b border-slate-100 pb-2">
-                  <span>Bullet Point #{index + 1}</span>
-                  <div className="flex items-center gap-2">
-                    {bullet.status === 'accepted' && (
-                      <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1">
-                        <Check className="w-3 h-3 text-emerald-600" /> Accepted
-                      </span>
-                    )}
-                    {bullet.status === 'rejected' && (
-                      <span className="text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1">
-                        <X className="w-3 h-3 text-rose-600" /> Rejected
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
-                  {/* Original */}
-                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      Original Phrasing
-                    </span>
-                    <p className="text-xs text-slate-700 leading-relaxed font-mono">
-                      "{bullet.original}"
-                    </p>
-                  </div>
-
-                  {/* Enhanced */}
-                  <div className="p-3 rounded-lg bg-blue-50/50 border border-blue-200 space-y-1 relative">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 flex items-center gap-1">
-                        <Sparkles className="w-3 h-3" /> Enhanced Impact (ATS Optimized)
-                      </span>
-                      <button
-                        onClick={() => handleCopyText(bullet.enhanced, bullet.id)}
-                        className="text-slate-400 hover:text-blue-600 p-0.5 cursor-pointer"
-                        title="Copy text"
-                      >
-                        {copiedId === bullet.id ? (
-                          <CheckCheck className="w-3.5 h-3.5 text-emerald-600" />
-                        ) : (
-                          <Copy className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-                    </div>
-                    <p className="text-xs text-slate-900 leading-relaxed font-medium">
-                      "{bullet.enhanced}"
-                    </p>
-                  </div>
-                </div>
-
-                {/* Accept / Reject actions */}
-                <div className="flex items-center justify-end gap-2 pt-1">
-                  <button
-                    onClick={() => updateBulletStatus(activeSection.id, bullet.id, 'rejected')}
-                    className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1 transition-colors cursor-pointer ${
-                      bullet.status === 'rejected'
-                        ? 'bg-rose-50 border-rose-200 text-rose-700 font-semibold'
-                        : 'border-slate-300 text-slate-600 hover:text-rose-700 hover:bg-rose-50'
-                    }`}
-                  >
-                    <X className="w-3.5 h-3.5" />
-                    <span>Reject</span>
-                  </button>
-                  <button
-                    onClick={() => updateBulletStatus(activeSection.id, bullet.id, 'accepted')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1 transition-colors cursor-pointer ${
-                      bullet.status === 'accepted'
-                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700 font-semibold'
-                        : 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700'
-                    }`}
-                  >
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Accept Suggestion</span>
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          /* Single block (Summary, Skills, Education, Certifications) */
-          <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-card space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Original block */}
-              <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  Original Resume Text
-                </span>
-                <div className="text-xs text-slate-700 whitespace-pre-line leading-relaxed font-mono">
-                  {activeSection.original}
-                </div>
-              </div>
-
-              {/* Enhanced block */}
-              <div className="p-4 rounded-lg bg-blue-50/50 border border-blue-200 space-y-2 relative">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" /> Enhanced Phrasing
-                  </span>
-                  <button
-                    onClick={() => handleCopyText(activeSection.enhanced, activeSection.id)}
-                    className="text-slate-400 hover:text-blue-600 p-0.5 cursor-pointer"
-                    title="Copy text"
-                  >
-                    {copiedId === activeSection.id ? (
-                      <CheckCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5" />
-                    )}
-                  </button>
-                </div>
-                <div className="text-xs text-slate-900 whitespace-pre-line leading-relaxed font-medium">
-                  {activeSection.enhanced}
-                </div>
-              </div>
-            </div>
-
-            {/* Improvement Highlights */}
-            {activeSection.improvements && (
-              <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
-                <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
-                  Why this enhancement scores higher:
-                </span>
-                <ul className="space-y-1">
-                  {activeSection.improvements.map((imp, idx) => (
-                    <li key={idx} className="text-xs text-slate-700 flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>{imp}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Section Actions */}
-            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
-              <button
-                onClick={() => updateSectionStatus(activeSection.id, 'rejected')}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold border flex items-center gap-1 transition-colors cursor-pointer ${
-                  activeSection.status === 'rejected'
-                    ? 'bg-rose-50 border-rose-200 text-rose-700'
-                    : 'border-slate-300 text-slate-600 hover:text-rose-700 hover:bg-rose-50'
-                }`}
-              >
-                <X className="w-3.5 h-3.5" />
-                <span>Reject</span>
-              </button>
-              <button
-                onClick={() => updateSectionStatus(activeSection.id, 'accepted')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-semibold border flex items-center gap-1 transition-colors cursor-pointer ${
-                  activeSection.status === 'accepted'
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                    : 'bg-blue-600 border-transparent text-white hover:bg-blue-700'
-                }`}
-              >
-                <Check className="w-3.5 h-3.5" />
-                <span>Accept Enhanced Section</span>
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Next Flow Step Navigation */}
-      <div className="flex items-center justify-between pt-2">
-        <button
-          onClick={() => navigate('/gap-analysis')}
-          className="text-xs text-slate-500 hover:text-slate-800 cursor-pointer"
-        >
-          ← Back to Gap Analysis
-        </button>
-        <button
-          onClick={() => navigate('/mock-interview')}
-          className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-subtle flex items-center gap-1.5 transition-colors"
-        >
-          <span>Proceed to Mock Interview</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function errorText(err, fallback) {
-  const details = Array.isArray(err?.errors)
-    ? err.errors.map((e) => (typeof e === 'string' ? e : e?.message)).filter(Boolean).join('; ')
-    : '';
-  return [err?.message || fallback, details].filter(Boolean).join(' - ');
-}
-
-function fmtDate(v) {
+const fmtDate = (v) => {
   const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString();
-}
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleString();
+};
+const SOURCE_LABEL = { AI: 'AI-generated', USER_EDIT: 'Your edit', USER: 'Manual draft' };
+const isApproved = (v) => v?.status === 'COMPLETED' && !!v?.approvedAt;
 
-function RealEnhancementView() {
+export default function ResumeEnhancementPage() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const { analysisResult, currentUser, showToast } = useApp();
   const userId = currentUser?.id;
-  const analysisId = analysisResult?.id || null;
+  const enhId = params.get('id');
+  const analysisParam = params.get('analysis');
+  const analysisId = analysisParam || analysisResult?.id || null;
 
   const [state, setState] = useState({ status: 'loading', error: null });
-  const [target, setTarget] = useState(null); // {resumeId, jobDescriptionId, title, company, resumeName}
+  const [target, setTarget] = useState(null);
   const [versions, setVersions] = useState([]);
-  const [selectedId, setSelectedId] = useState(null); // version id, or 'new'
+  const [selectedId, setSelectedId] = useState(null);
+  const [compare, setCompare] = useState(null);
+  const [compareError, setCompareError] = useState(null);
   const [text, setText] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const savingRef = useRef(false);
-  const pendingSelectRef = useRef(null);
+  const [busy, setBusy] = useState(null); // 'generate' | 'save' | 'approve' | 'download'
+  const [actionError, setActionError] = useState(null);
+  const busyRef = useRef(false);
+  const pendingSelect = useRef(null);
 
-  const selectVersion = (v) => {
-    setSelectedId(v ? v.id : 'new');
-    setText(v?.enhancedContent || '');
-  };
+  const selected = versions.find((v) => v.id === selectedId) || null;
 
+  // Resolve (resume, JD) target and load versions.
   useEffect(() => {
     let cancelled = false;
     setState({ status: 'loading', error: null });
-    setTarget(null);
-    setVersions([]);
-    setSelectedId(null);
-    setText('');
-
     (async () => {
       try {
-        let id = analysisId;
-        if (!id) {
-          const list = await api.analyses.list({ limit: 1 });
-          id = list?.data?.[0]?.id || null;
+        let t = null;
+        let knownEnhId = null;
+        if (enhId) {
+          const r = await api.enhancements.get(enhId);
+          const e = r?.data;
+          t = { resumeId: e.resumeId, jobDescriptionId: e.jobDescriptionId, analysisId: analysisId || null, title: e.jobDescription?.title || '', company: e.jobDescription?.companyName || '', resumeName: e.resume?.originalFilename || '' };
+          knownEnhId = e.id;
+        } else {
+          let id = analysisId;
+          if (!id) {
+            const list = await api.analyses.list({ limit: 1, status: 'COMPLETED' });
+            id = list?.data?.[0]?.id || null;
+          }
+          if (!id) { if (!cancelled) setState({ status: 'no-analysis', error: null }); return; }
+          const res = await api.analyses.get(id);
+          const a = res?.data;
+          t = { resumeId: a.resumeId, jobDescriptionId: a.jobDescriptionId, analysisId: a.status === 'COMPLETED' ? a.id : null, title: a.jobDescription?.title || '', company: a.jobDescription?.companyName || '', resumeName: a.resume?.originalFilename || '' };
         }
-        if (!id) {
-          if (!cancelled) setState({ status: 'no-analysis', error: null });
-          return;
+        let anyId = knownEnhId;
+        if (!anyId) {
+          const enh = await api.enhancements.list({ limit: 100 });
+          anyId = (enh?.data || []).find((e) => e.resumeId === t.resumeId && e.jobDescriptionId === t.jobDescriptionId)?.id || null;
         }
-        const res = await api.analyses.get(id);
-        const a = res?.data ?? res;
-        const t = {
-          resumeId: a.resumeId,
-          jobDescriptionId: a.jobDescriptionId,
-          title: a.jobDescription?.title || '',
-          company: a.jobDescription?.companyName || '',
-          resumeName: a.resume?.originalFilename || ''
-        };
-        const enh = await api.enhancements.list({ limit: 100 });
-        const match = (enh?.data || []).find(
-          (e) => e.resumeId === t.resumeId && e.jobDescriptionId === t.jobDescriptionId
-        );
         let vs = [];
-        if (match) {
-          const vr = await api.enhancements.getVersions(match.id);
+        if (anyId) {
+          const vr = await api.enhancements.getVersions(anyId);
           vs = vr?.data?.versions || [];
         }
         if (cancelled) return;
         setTarget(t);
         setVersions(vs);
-        const wanted = pendingSelectRef.current;
-        pendingSelectRef.current = null;
-        const pick = (wanted && vs.find((v) => v.version === wanted)) || vs[vs.length - 1];
-        if (pick) {
-          setSelectedId(pick.id);
-          setText(pick.enhancedContent || '');
-        } else {
-          setSelectedId('new');
-          setText('');
-        }
+        const wanted = pendingSelect.current || knownEnhId;
+        pendingSelect.current = null;
+        const pick = (wanted && vs.find((v) => v.id === wanted)) || [...vs].reverse().find((v) => v.generationStatus === 'COMPLETED') || vs[vs.length - 1];
+        setSelectedId(pick?.id || null);
         setState({ status: 'ready', error: null });
       } catch (err) {
-        if (!cancelled) setState({ status: 'error', error: errorText(err, 'Failed to load enhancements.') });
+        if (!cancelled) setState({ status: 'error', error: describeApiError(err, 'Failed to load enhancements.') });
       }
     })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, analysisId, enhId, reloadKey]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [userId, analysisId, reloadKey]);
+  // Load side-by-side comparison for the selected version.
+  useEffect(() => {
+    setCompare(null);
+    setCompareError(null);
+    if (!selected) { setText(''); return undefined; }
+    setText(selected.enhancedContent || '');
+    if (selected.generationStatus !== 'COMPLETED') return undefined;
+    let cancelled = false;
+    api.enhancements.compare(selected.id).then((res) => { if (!cancelled) setCompare(res?.data); })
+      .catch((err) => { if (!cancelled) setCompareError(describeApiError(err)); });
+    return () => { cancelled = true; };
+  }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const selected = versions.find((v) => v.id === selectedId) || null;
-  const baseline = selected?.enhancedContent || '';
-  const canSave = !isSaving && text.trim().length > 0 && text !== baseline;
+  const run = useCallback(async (kind, fn) => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    setBusy(kind);
+    setActionError(null);
+    try { await fn(); } catch (err) { setActionError(describeApiError(err)); }
+    finally { busyRef.current = false; setBusy(null); }
+  }, []);
 
-  const handleSave = useCallback(async () => {
-    if (savingRef.current || !target) return;
-    savingRef.current = true;
-    setIsSaving(true);
-    try {
-      const res = await api.enhancements.create({
-        resumeId: target.resumeId,
-        jobDescriptionId: target.jobDescriptionId,
-        enhancedContent: text,
-        status: 'DRAFT'
-      });
-      const created = res?.data ?? res;
-      pendingSelectRef.current = created?.version || null;
-      showToast('Saved as a new version.', 'success');
-      setReloadKey((k) => k + 1);
-    } catch (err) {
-      showToast(errorText(err, 'Failed to save version.'), 'error');
-    } finally {
-      savingRef.current = false;
-      setIsSaving(false);
-    }
-  }, [target, text, showToast]);
+  const handleGenerate = (force) => run('generate', async () => {
+    const res = await api.enhancements.generate({
+      resumeId: target.resumeId,
+      jobDescriptionId: target.jobDescriptionId,
+      ...(target.analysisId ? { analysisId: target.analysisId } : {}),
+      force: !!force
+    });
+    const e = res?.data;
+    pendingSelect.current = e?.id || null;
+    showToast(e?.reused ? 'Existing enhancement for identical inputs reused.' : 'Enhancement generated.', 'success');
+    setReloadKey((k) => k + 1);
+  });
 
-  const handleDownload = async () => {
-    if (!selected || isDownloading) return;
-    setIsDownloading(true);
-    try {
-      await api.enhancements.download(selected.id, `enhanced-resume-v${selected.version}.txt`);
-    } catch (err) {
-      showToast(errorText(err, 'Failed to download version.'), 'error');
-    } finally {
-      setIsDownloading(false);
-    }
-  };
+  const handleSave = () => run('save', async () => {
+    const res = await api.enhancements.update(selected.id, { enhancedContent: text });
+    pendingSelect.current = res?.data?.id || null;
+    showToast('Saved as a new version.', 'success');
+    setReloadKey((k) => k + 1);
+  });
 
-  if (state.status === 'loading') {
-    return (
-      <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-card text-center">
-        <p className="text-sm text-slate-600">Loading saved versions...</p>
-      </div>
-    );
-  }
+  const handleApprove = () => run('approve', async () => {
+    await api.enhancements.approve(selected.id);
+    pendingSelect.current = selected.id;
+    showToast('Version approved.', 'success');
+    setReloadKey((k) => k + 1);
+  });
 
-  if (state.status === 'error') {
-    return (
-      <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-card text-center space-y-3">
-        <p className="text-sm text-rose-700">{state.error}</p>
-        <button
-          onClick={() => setReloadKey((k) => k + 1)}
-          className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-subtle transition-colors cursor-pointer"
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
+  const handleDownload = (format) => run('download', () =>
+    api.enhancements.download(selected.id, format, `enhanced-resume-v${selected.version}.${format}`));
 
-  if (state.status === 'no-analysis') {
-    return (
-      <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-card text-center space-y-3">
-        <p className="text-sm text-slate-600">Run an analysis first.</p>
-        <button
-          onClick={() => navigate('/analysis')}
-          className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-subtle inline-flex items-center gap-1.5 transition-colors cursor-pointer"
-        >
-          <span>Go to Analysis</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    );
-  }
+  const box = (children) => (
+    <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-card text-center space-y-3">{children}</div>
+  );
+  if (state.status === 'loading') return box(<p className="text-sm text-slate-600" role="status">Loading saved versions…</p>);
+  if (state.status === 'error') return box(<><p className="text-sm text-rose-700" role="alert">{state.error}</p><button onClick={() => setReloadKey((k) => k + 1)} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-semibold cursor-pointer">Retry</button></>);
+  if (state.status === 'no-analysis') return box(<><p className="text-sm text-slate-600">Run an analysis first.</p><button onClick={() => navigate('/analysis')} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"><span>Go to Analysis</span><ArrowRight className="w-3.5 h-3.5" /></button></>);
 
-  const canDownload = !!selected?.documentStoragePath;
+  const approved = isApproved(selected);
+  const canEdit = selected && selected.generationStatus === 'COMPLETED';
+  const edited = canEdit && text.trim() && text.trim() !== (selected.enhancedContent || '').trim();
+  const report = compare?.groundingReport;
+  const generating = busy === 'generate';
 
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-xl p-5 lg:p-6 border border-slate-200 shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-600 uppercase tracking-wider mb-0.5">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Resume Enhancement</span>
-          </div>
-          <h2 className="text-lg lg:text-xl font-bold text-slate-900 font-display">
-            Resume Enhancement & Phrasing Optimization
-          </h2>
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-600 uppercase tracking-wider mb-0.5"><Sparkles className="w-3.5 h-3.5" /><span>Resume Enhancement</span></div>
+          <h2 className="text-lg lg:text-xl font-bold text-slate-900 font-display">Resume Enhancement & Phrasing Optimization</h2>
           <p className="text-xs text-slate-500 mt-0.5">
             Target Role: <strong className="text-slate-800">{target.title || 'N/A'}</strong>
             {target.company && <> at <strong className="text-slate-800">{target.company}</strong></>}
             {target.resumeName && <> • Resume: <strong className="text-slate-800">{target.resumeName}</strong></>}
           </p>
         </div>
-
-        <div className="flex items-center gap-2.5">
-          <button
-            onClick={handleDownload}
-            disabled={!canDownload || isDownloading}
-            title={canDownload ? 'Download this version' : 'No stored file for this version'}
-            className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-subtle flex items-center gap-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>{isDownloading ? 'Downloading...' : 'Download Version'}</span>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button onClick={() => handleGenerate(versions.some((v) => v.source === 'AI'))} disabled={!!busy} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50 cursor-pointer">
+            {generating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+            <span>{generating ? 'Generating (may take a minute)…' : versions.some((v) => v.source === 'AI') ? 'Regenerate AI enhancement' : 'Generate AI enhancement'}</span>
           </button>
-          <button
-            onClick={() => navigate('/mock-interview')}
-            className="px-4 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold border border-slate-300 flex items-center gap-1.5 transition-colors"
-          >
-            <Bot className="w-3.5 h-3.5 text-blue-600" />
-            <span>Practice Interview</span>
-          </button>
+          <button onClick={() => navigate('/mock-interview')} className="px-4 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold border border-slate-300 flex items-center gap-1.5 cursor-pointer"><Bot className="w-3.5 h-3.5 text-blue-600" /><span>Practice Interview</span></button>
         </div>
       </div>
 
       <div className="p-3.5 rounded-lg bg-blue-50 border border-blue-200 flex items-start gap-3">
         <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
         <div className="text-xs space-y-0.5">
-          <span className="font-bold text-slate-900">Strict No-Fabrication Policy</span>
-          <p className="text-slate-600 leading-relaxed">
-            Enhanced content here is written by you. CVATS does not rewrite your resume automatically.
-          </p>
+          <span className="font-bold text-slate-900">AI-suggested content — review before use</span>
+          <p className="text-slate-600 leading-relaxed">Suggestions only reword what is already in your resume and are checked against it. They are not treated as verified by you until you approve a version.</p>
         </div>
       </div>
 
+      {actionError && <p className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3" role="alert">{actionError}</p>}
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        {/* Version list */}
         <div className="lg:col-span-1 space-y-2">
-          {versions.length === 0 && (
-            <p className="text-xs text-slate-500">No enhanced versions saved yet.</p>
-          )}
+          <h3 className="text-xs font-bold text-slate-700">Versions</h3>
+          {versions.length === 0 && <p className="text-xs text-slate-500">No versions yet. Generate an AI enhancement to start.</p>}
           <div className="flex lg:flex-col gap-2 overflow-x-auto pb-1">
             {[...versions].reverse().map((v) => (
-              <button
-                key={v.id}
-                onClick={() => selectVersion(v)}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap text-left transition-colors cursor-pointer ${
-                  selectedId === v.id
-                    ? 'bg-blue-600 text-white shadow-subtle'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                Version {v.version} · {String(v.status || '').toLowerCase()}
-                {fmtDate(v.createdAt) && ` · ${fmtDate(v.createdAt)}`}
+              <button key={v.id} onClick={() => setSelectedId(v.id)} className={`px-3.5 py-2 rounded-lg text-xs font-semibold text-left transition-colors cursor-pointer ${selectedId === v.id ? 'bg-blue-600 text-white shadow-subtle' : 'text-slate-600 hover:bg-slate-100 border border-slate-200'}`}>
+                <span className="block whitespace-nowrap">v{v.version} · {SOURCE_LABEL[v.source] || v.source}</span>
+                <span className="block font-normal opacity-80 whitespace-nowrap">
+                  {v.generationStatus === 'FAILED' ? 'Failed' : v.generationStatus === 'PROCESSING' ? 'Generating…' : isApproved(v) ? 'Approved' : 'Draft (not approved)'} · {fmtDate(v.createdAt)}
+                </span>
               </button>
             ))}
-            <button
-              onClick={() => selectVersion(null)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap text-left transition-colors cursor-pointer ${
-                selectedId === 'new'
-                  ? 'bg-blue-600 text-white shadow-subtle'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              Start a new draft
-            </button>
           </div>
         </div>
 
-        {/* Editor */}
-        <div className="lg:col-span-3 bg-white rounded-xl p-5 border border-slate-200 shadow-card space-y-3">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 font-display">
-              {selected ? `Version ${selected.version}` : 'New draft'}
-            </h3>
-            <p className="text-xs text-slate-500">
-              Saving creates a new version. Previous versions are kept; the server has no edit or delete.
+        <div className="lg:col-span-3 space-y-4">
+          {!selected && <p className="text-xs text-slate-500">Select or generate a version.</p>}
+          {selected?.generationStatus === 'FAILED' && (
+            <p className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3" role="alert">
+              This generation failed: {selected.errorMessage || 'unknown error'}. Use “Generate AI enhancement” to retry.
             </p>
-          </div>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={16}
-            placeholder="Write your enhanced resume content here."
-            className="w-full p-3 rounded-lg border border-slate-300 text-xs text-slate-900 leading-relaxed font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
-            <button
-              onClick={handleSave}
-              disabled={!canSave}
-              className="px-4 py-1.5 rounded-lg bg-blue-600 border border-transparent text-white text-xs font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-            >
-              {isSaving ? 'Saving...' : 'Save as new version'}
-            </button>
-            <button
-              disabled
-              title="Automatic rewriting is not offered"
-              className="px-3 py-1.5 rounded-lg bg-white text-slate-700 text-xs font-medium border border-slate-300 flex items-center gap-1.5 opacity-50 cursor-not-allowed"
-            >
-              <RotateCw className="w-3.5 h-3.5" />
-              <span>Regenerate: Not available</span>
-            </button>
-          </div>
+          )}
+          {selected?.generationStatus === 'PROCESSING' && <p className="text-xs text-slate-600">This version is still being generated.</p>}
+
+          {canEdit && (
+            <>
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className={`px-2 py-0.5 rounded border font-semibold ${approved ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                  {approved ? <span className="inline-flex items-center gap-1"><CheckCircle2 className="w-3 h-3" />Approved by you</span> : 'Draft — not approved'}
+                </span>
+                <span className="text-slate-500">{SOURCE_LABEL[selected.source] || selected.source}</span>
+              </div>
+
+              {compareError && <p className="text-xs text-rose-700" role="alert">{compareError}</p>}
+              {!compare && !compareError && <p className="text-xs text-slate-500" role="status">Loading comparison…</p>}
+
+              {compare && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-card">
+                    <h4 className="text-xs font-bold text-slate-900 mb-2">Original resume</h4>
+                    <pre className="whitespace-pre-wrap text-[11px] text-slate-700 font-mono max-h-80 overflow-auto">{compare.original?.text || 'No original text available.'}</pre>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 border border-blue-200 shadow-card">
+                    <h4 className="text-xs font-bold text-slate-900 mb-2">This version {approved ? '' : '(suggested, unverified)'}</h4>
+                    <pre className="whitespace-pre-wrap text-[11px] text-slate-700 font-mono max-h-80 overflow-auto">{compare.enhanced?.text}</pre>
+                  </div>
+                </div>
+              )}
+
+              {report && (
+                <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-card space-y-2 text-xs">
+                  <h4 className="font-bold text-slate-900 flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-blue-600" /> Grounding report</h4>
+                  <p className="text-slate-600">
+                    {report.skipped ? 'No original data was available to verify against.' : `${report.checkedItems} items checked • ${report.acceptedItems} accepted • ${report.revertedItems} reverted • ${report.needsReviewItems} need your review`}
+                    {report.advisory ? ' (advisory only for your own edits)' : ''}
+                  </p>
+                  {(report.warnings || []).map((w, i) => <p key={i} className="text-amber-700">{w}</p>)}
+                  {(report.flagged || []).length > 0 && (
+                    <ul className="space-y-2">
+                      {report.flagged.map((f, i) => (
+                        <li key={i} className="p-2 rounded-lg bg-amber-50 border border-amber-200">
+                          <p className="font-semibold text-amber-900 flex items-center gap-1"><AlertTriangle className="w-3 h-3" />{f.issue.replace(/_/g, ' ')} — {f.action === 'reverted' ? 'reverted to your original wording' : 'needs review'}</p>
+                          {f.detail && <p className="text-amber-800">{f.detail}</p>}
+                          <p className="text-slate-600">Original: {f.originalText || '—'}</p>
+                          <p className="text-slate-600">Proposed: {f.proposedText}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+
+              {compare?.changes?.length > 0 && (
+                <details className="bg-white rounded-xl p-4 border border-slate-200 shadow-card text-xs">
+                  <summary className="font-bold text-slate-900 cursor-pointer">Changes made ({compare.changes.length})</summary>
+                  <ul className="mt-2 space-y-2">
+                    {compare.changes.map((c, i) => (
+                      <li key={i} className="p-2 rounded-lg bg-slate-50 border border-slate-200">
+                        <p className="text-[10px] uppercase font-semibold text-slate-500">{c.changeType} · {c.path}</p>
+                        <p className="text-slate-500 line-through">{c.originalText}</p>
+                        <p className="text-slate-800">{c.enhancedText}</p>
+                        {c.justification && <p className="text-slate-500 italic">{c.justification}</p>}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+
+              {compare?.metricSuggestions?.length > 0 && (
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 text-xs space-y-1">
+                  <h4 className="font-bold text-slate-900">Notes: where you could add real numbers</h4>
+                  <p className="text-slate-500">These are prompts only. Add a metric yourself only if it is true.</p>
+                  <ul className="list-disc pl-4 text-slate-700">{compare.metricSuggestions.map((m, i) => <li key={i}>{m.suggestion}</li>)}</ul>
+                </div>
+              )}
+
+              <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-card space-y-3">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 font-display">Edit version {selected.version}</h3>
+                  <p className="text-xs text-slate-500">Saving creates a new version (marked as your edit); earlier versions are kept.</p>
+                </div>
+                <textarea value={text} onChange={(e) => setText(e.target.value)} rows={14} className="w-full p-3 rounded-lg border border-slate-300 text-xs text-slate-900 leading-relaxed font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <div className="flex flex-wrap items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+                  <button onClick={() => handleDownload('txt')} disabled={!!busy} className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 text-xs font-medium flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"><Download className="w-3.5 h-3.5" />TXT</button>
+                  <button onClick={() => handleDownload('docx')} disabled={!!busy} className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 text-xs font-medium flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"><Download className="w-3.5 h-3.5" />DOCX</button>
+                  <button onClick={handleSave} disabled={!edited || !!busy} className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold disabled:opacity-50 cursor-pointer">{busy === 'save' ? 'Saving…' : 'Save as new version'}</button>
+                  <button onClick={handleApprove} disabled={approved || !!edited || !!busy} title={edited ? 'Save your edits first' : undefined} className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold disabled:opacity-50 cursor-pointer">{busy === 'approve' ? 'Approving…' : approved ? 'Approved' : 'Approve this version'}</button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
       <div className="flex items-center justify-between pt-2">
-        <button
-          onClick={() => navigate('/gap-analysis')}
-          className="text-xs text-slate-500 hover:text-slate-800 cursor-pointer"
-        >
-          ← Back to Gap Analysis
-        </button>
-        <button
-          onClick={() => navigate('/mock-interview')}
-          className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-subtle flex items-center gap-1.5 transition-colors"
-        >
-          <span>Proceed to Mock Interview</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+        <button onClick={() => navigate('/gap-analysis')} className="text-xs text-slate-500 hover:text-slate-800 cursor-pointer">← Back to Gap Analysis</button>
+        <button onClick={() => navigate('/mock-interview')} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer"><span>Proceed to Mock Interview</span><ArrowRight className="w-3.5 h-3.5" /></button>
       </div>
     </div>
   );
-}
-
-export default function ResumeEnhancementPage() {
-  const { enhancementData } = useApp();
-  if (DEMO_MODE && enhancementData) return <DemoEnhancementView />;
-  return <RealEnhancementView />;
 }

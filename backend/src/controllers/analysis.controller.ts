@@ -5,8 +5,12 @@ import { ApiResponse } from '../utils/apiResponse';
 export class AnalysisController {
   static async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const analysis = await AnalysisService.create(req.user!.id, req.body);
-      ApiResponse.created(res, 'Job match analysis record created successfully', analysis);
+      const { analysis, created } = await AnalysisService.createOrGetExisting(req.user!.id, req.body);
+      if (created) {
+        ApiResponse.created(res, 'Job match analysis record created successfully', analysis);
+      } else {
+        ApiResponse.success(res, 'An analysis for this resume and job description is already in progress', analysis);
+      }
     } catch (error) {
       next(error);
     }
@@ -31,6 +35,24 @@ export class AnalysisController {
     try {
       const analysis = await AnalysisService.getById(req.user!.id, req.params.id as string);
       ApiResponse.success(res, 'Job match analysis retrieved successfully', analysis);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async retry(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const analysis = await AnalysisService.retry(req.user!.id, req.params.id as string);
+      ApiResponse.success(res, 'Job match analysis retry started', analysis, 202);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getResult(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await AnalysisService.getResult(req.user!.id, req.params.id as string);
+      ApiResponse.success(res, 'Job match analysis result retrieved successfully', result);
     } catch (error) {
       next(error);
     }

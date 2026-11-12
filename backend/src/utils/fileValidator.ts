@@ -29,4 +29,17 @@ export function validateResumeFile(file: Express.Multer.File | undefined): void 
       `Invalid MIME type (${file.mimetype}). Only PDF and DOCX files are allowed.`
     );
   }
+
+  // Magic-byte sniffing: the declared extension/MIME must match the actual content.
+  const buf = file.buffer;
+  const head = buf ? buf.subarray(0, 1024).toString('latin1') : '';
+  if (ext === '.pdf') {
+    if (!head.includes('%PDF-')) {
+      throw ApiError.unsupportedMediaType('File content is not a valid PDF (signature mismatch).');
+    }
+  } else if (ext === '.docx') {
+    if (!buf || buf.length < 4 || buf[0] !== 0x50 || buf[1] !== 0x4b || buf[2] !== 0x03 || buf[3] !== 0x04) {
+      throw ApiError.unsupportedMediaType('File content is not a valid DOCX (signature mismatch).');
+    }
+  }
 }
