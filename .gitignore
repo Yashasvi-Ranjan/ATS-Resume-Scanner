@@ -45,3 +45,32 @@ Thumbs.db
 .eslintcache
 .temp/
 .tmp/
+
+# Environment files (keep the *.example templates tracked)
+.env.*
+!.env.example
+.env.test
+.env.development
+.env.production
+
+# Uploaded user files (resumes, generated enhancements) - keep folder placeholders only
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/uploads/resumes/*
+!backend/uploads/resumes/.gitkeep
+backend/uploads/enhancements/*
+!backend/uploads/enhancements/.gitkeep
+
+# Test / coverage output
+coverage/
+.nyc_output/
+*.lcov
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Misc OS / tooling
+.vite-cache/
+.npm/
+*.pid
+*.seed
