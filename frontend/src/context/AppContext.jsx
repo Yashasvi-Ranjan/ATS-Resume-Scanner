@@ -145,6 +145,7 @@ export function AppProvider({ children }) {
   // Incremented on every session change (login/register/logout/restore) so that
   // in-flight requests from a previous session can be discarded.
   const sessionRef = useRef(0);
+  const restoreRef = useRef(0);
 
   // Uploaded resume state
   const [resumeFile, setResumeFile] = useState(initial.resumeFile);
@@ -360,6 +361,7 @@ export function AppProvider({ children }) {
     async function restoreSession() {
       setIsAuthLoading(true);
       const session = ++sessionRef.current;
+      const restoreId = ++restoreRef.current;
       try {
         const token = api.getToken();
         if (!token) {
@@ -385,7 +387,9 @@ export function AppProvider({ children }) {
           showToast(`Could not restore your session: ${err?.message || 'Unknown error'}`, 'error', 5000);
         }
       } finally {
-        setIsAuthLoading(false);
+        // Only the latest restore may end the loading state; a superseded call (e.g. React
+        // StrictMode's double effect run) must not, or ProtectedRoute redirects to /login too early.
+        if (restoreId === restoreRef.current) setIsAuthLoading(false);
       }
     }
 
