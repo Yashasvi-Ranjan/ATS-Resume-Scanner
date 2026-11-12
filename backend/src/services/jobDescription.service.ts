@@ -1,4 +1,6 @@
+import { Prisma } from '@prisma/client';
 import prisma from '../config/prisma';
+import { legacyIsAutomatic } from '../ai/jd/jdParser.service';
 import { ApiError } from '../utils/apiError';
 import { buildPaginationMeta, parsePagination } from '../utils/pagination';
 
@@ -6,7 +8,7 @@ export interface CreateJobDescriptionDTO {
   title: string;
   companyName?: string | null;
   description: string;
-  requiredSkills: string[];
+  requiredSkills?: string[];
   preferredSkills?: string[];
   experienceRequirements?: string | null;
   educationRequirements?: string | null;
@@ -30,7 +32,7 @@ export class JobDescriptionService {
         title: data.title,
         companyName: data.companyName,
         description: data.description,
-        requiredSkills: data.requiredSkills,
+        requiredSkills: data.requiredSkills ?? [],
         preferredSkills: data.preferredSkills || [],
         experienceRequirements: data.experienceRequirements,
         educationRequirements: data.educationRequirements
@@ -77,11 +79,35 @@ export class JobDescriptionService {
   }
 
   static async update(userId: string, id: string, data: UpdateJobDescriptionDTO) {
-    await this.getById(userId, id);
+    const existing = await this.getById(userId, id);
+
+    // Editing the description makes any parse stale: reset parse state (and automatic legacy values) so
+    // downstream modules never use requirements that came from the old text.
+    const descriptionChanged = data.description !== undefined && data.description !== existing.description;
+    const stale: Prisma.JobDescriptionUpdateInput = {};
+    if (descriptionChanged) {
+      const auto = legacyIsAutomatic(existing);
+      Object.assign(stale, {
+        parseStatus: 'NOT_PARSED',
+        parseError: null,
+        parsedData: Prisma.DbNull,
+        userEditedData: Prisma.DbNull,
+        parsedAt: null,
+        parserVersion: null,
+        descriptionHash: null
+      });
+      if (auto) {
+        if (data.requiredSkills === undefined) stale.requiredSkills = [];
+        if (data.preferredSkills === undefined) stale.preferredSkills = [];
+        if (data.experienceRequirements === undefined) stale.experienceRequirements = null;
+        if (data.educationRequirements === undefined) stale.educationRequirements = null;
+      }
+    }
 
     const updated = await prisma.jobDescription.update({
       where: { id },
       data: {
+        ...stale,
         ...(data.title !== undefined && { title: data.title }),
         ...(data.companyName !== undefined && { companyName: data.companyName }),
         ...(data.description !== undefined && { description: data.description }),

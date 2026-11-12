@@ -1,6 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { InterviewService } from '../services/interview.service';
 import { ApiResponse } from '../utils/apiResponse';
+import { ApiError } from '../utils/apiError';
+
+function wantsEvaluation(req: Request): boolean {
+  if (typeof req.body?.evaluate === 'boolean') return req.body.evaluate;
+  return String(req.query.evaluate ?? 'true').toLowerCase() !== 'false';
+}
 
 export class InterviewController {
   static async create(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -54,7 +60,8 @@ export class InterviewController {
       const answer = await InterviewService.submitAnswer(
         req.user!.id,
         req.params.id as string,
-        req.body
+        { questionId: req.body.questionId, answerText: req.body.answerText },
+        wantsEvaluation(req)
       );
       ApiResponse.created(res, 'Interview answer submitted successfully', answer);
     } catch (error) {
@@ -68,7 +75,8 @@ export class InterviewController {
         req.user!.id,
         req.params.id as string,
         req.params.answerId as string,
-        req.body.answerText
+        req.body.answerText,
+        wantsEvaluation(req)
       );
       ApiResponse.success(res, 'Interview answer updated successfully', updated);
     } catch (error) {
@@ -89,14 +97,42 @@ export class InterviewController {
     }
   }
 
-  static async addEvaluation(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async evaluationsGone(_req: Request, _res: Response, next: NextFunction): Promise<void> {
+    next(new ApiError(410, 'Evaluations can no longer be submitted by clients. Answers are evaluated by the server.'));
+  }
+
+  static async generateQuestions(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const evaluation = await InterviewService.addEvaluation(
+      const result = await InterviewService.generateQuestions(req.user!.id, req.params.id as string, {
+        regenerate: req.body?.regenerate === true
+      });
+      ApiResponse.success(
+        res,
+        result.generated ? 'Interview questions generated successfully' : 'Interview questions already exist',
+        result
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async evaluateAnswer(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await InterviewService.evaluateAnswerById(
         req.user!.id,
         req.params.id as string,
-        req.body
+        req.params.answerId as string
       );
-      ApiResponse.created(res, 'Interview evaluation recorded successfully', evaluation);
+      ApiResponse.success(res, 'Answer evaluated successfully', result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async complete(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await InterviewService.completeSession(req.user!.id, req.params.id as string);
+      ApiResponse.success(res, 'Interview session completed successfully', result);
     } catch (error) {
       next(error);
     }

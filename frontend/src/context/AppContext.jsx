@@ -1,13 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../services/api';
 import { DEMO_MODE } from '../config/demoMode';
-import { mockCandidateProfile, mockDefaultResumeFile } from '../data/mockResume';
-import { defaultJobDescription } from '../data/mockJobDescription';
-import { mockAnalysisResult } from '../data/mockAnalysis';
-import { mockGapAnalysisData } from '../data/mockGapAnalysis';
-import { mockEnhancementData } from '../data/mockEnhancement';
-import { mockHistoryData } from '../data/mockHistory';
-import { mockInterviewQuestions, mockInterviewResultsData } from '../data/mockInterview';
+import { describeApiError } from '../utils/errors';
+import { buildAnalysisSummary, toIsoDate, toScore, getVerdict } from '../utils/analysis';
 
 const AppContext = createContext(null);
 
@@ -18,17 +13,21 @@ const HISTORY_TYPE_ENHANCEMENT = 'Resume Enhancement';
 const HISTORY_PAGE_SIZE = 10;
 const EMPTY_HISTORY_META = { page: 1, totalPages: 1, total: 0, hasNext: false, hasPrev: false };
 
-function mapResumeRow(r) {
+export function mapResumeRow(r) {
   return {
     id: r.id,
     name: r.originalFilename,
-    size: `${Math.round(r.fileSize / 1024)} KB`,
+    size: `${Math.round((r.fileSize || 0) / 1024)} KB`,
     lastModified: toIsoDate(r.createdAt),
-    type: r.mimeType
+    type: r.mimeType,
+    parseStatus: r.parseStatus || 'NOT_PARSED',
+    parseError: r.parseError || null,
+    extractedTextLength: typeof r.extractedTextLength === 'number' ? r.extractedTextLength : null,
+    hasParsedData: Boolean(r.hasParsedData)
   };
 }
 
-/** Empty profile — mirrors the keys of mockCandidateProfile with empty values. */
+/** Empty profile with the same keys the profile page expects. */
 const EMPTY_PROFILE = {
   name: '',
   email: '',
@@ -41,53 +40,34 @@ const EMPTY_PROFILE = {
 };
 
 /**
- * Initial user-specific state. Sample data is seeded ONLY when DEMO_MODE is
- * explicitly enabled; otherwise every user starts with empty state.
+ * Initial user-specific state. Always empty: real users start from backend data only.
+ * Sample data exists only in DEMO_MODE and is loaded lazily from ../demo/seed.
  */
 function getInitialUserState() {
-  if (DEMO_MODE) {
-    return {
-      resumeFile: mockDefaultResumeFile,
-      jobDescription: defaultJobDescription,
-      analysisResult: mockAnalysisResult,
-      gapAnalysis: mockGapAnalysisData,
-      enhancementData: mockEnhancementData,
-      historyList: mockHistoryData,
-      interviewAnswers: {},
-      currentQuestionIndex: 0,
-      interviewResults: mockInterviewResultsData,
-      userProfile: mockCandidateProfile
-    };
-  }
   return {
     resumeFile: null,
+    activeJd: null,
     jobDescription: '',
     analysisResult: null,
     gapAnalysis: null,
-    enhancementData: null,
     historyList: [],
-    interviewAnswers: {},
-    currentQuestionIndex: 0,
-    interviewResults: null,
     userProfile: EMPTY_PROFILE
   };
 }
 
-function toIsoDate(value) {
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? '' : d.toISOString().split('T')[0];
-}
-
-function toScore(value) {
-  return typeof value === 'number' && Number.isFinite(value) ? value : null;
-}
-
-function getScoreVerdict(score) {
-  if (score == null) return null;
-  if (score >= 80) return 'Strong';
-  if (score >= 70) return 'Good';
-  if (score >= 50) return 'Moderate';
-  return 'Low';
+/** Remove every per-user key we may have cached in localStorage, except (optionally) the auth token. */
+export function clearUserStorage({ keepToken = true } = {}) {
+  try {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i += 1) keys.push(localStorage.key(i));
+    keys.forEach((k) => {
+      if (!k || !k.startsWith('cvats')) return;
+      if (keepToken && k === 'cvats_token') return;
+      localStorage.removeItem(k);
+    });
+  } catch {
+    // storage unavailable: nothing to clear
+  }
 }
 
 function normalizeAnalysis(item) {
@@ -98,7 +78,7 @@ function normalizeAnalysis(item) {
     role: item.jobDescription?.title || 'Untitled role',
     company: item.jobDescription?.companyName || '',
     score,
-    scoreVerdict: getScoreVerdict(score),
+    scoreVerdict: getVerdict(score),
     date: toIsoDate(item.createdAt),
     createdAt: item.createdAt,
     status: item.status,
@@ -123,7 +103,12 @@ function normalizeInterview(item) {
     date: toIsoDate(item.createdAt),
     createdAt: item.createdAt,
     status: item.status,
-    detailsUrl: `/mock-interview/results/${item.id}`,
+    detailsUrl:
+      item.status === 'COMPLETED'
+        ? `/mock-interview/results/${item.id}`
+        : item.status === 'ABANDONED'
+          ? null
+          : `/mock-interview?session=${item.id}`,
     summary: `${answered} of ${total} questions answered`,
     overallScore: null,
     skillsScore: null,
@@ -141,9 +126,9 @@ function normalizeEnhancement(item) {
     scoreVerdict: null,
     date: toIsoDate(item.createdAt),
     createdAt: item.createdAt,
-    status: item.status,
-    detailsUrl: null,
-    summary: `Version ${item.version ?? '?'} · ${item.resume?.originalFilename || 'Unknown'}`,
+    status: item.generationStatus === 'FAILED' ? 'FAILED' : item.approvedAt ? 'APPROVED' : 'DRAFT',
+    detailsUrl: `/resume-enhancement?id=${item.id}`,
+    summary: `Version ${item.version ?? '?'} (${item.source || 'USER'}${item.approvedAt ? ', approved' : ', not approved'}) · ${item.resume?.originalFilename || 'Unknown'}`,
     overallScore: null,
     skillsScore: null,
     experienceScore: null
@@ -164,11 +149,12 @@ export function AppProvider({ children }) {
   // Uploaded resume state
   const [resumeFile, setResumeFile] = useState(initial.resumeFile);
   const [jobDescription, setJobDescription] = useState(initial.jobDescription);
+  // Saved job description record ({ id, title, companyName, parseStatus, parseError, fingerprint }).
+  const [activeJd, setActiveJd] = useState(initial.activeJd);
 
   // Analysis results state
   const [analysisResult, setAnalysisResult] = useState(initial.analysisResult);
   const [gapAnalysis, setGapAnalysis] = useState(initial.gapAnalysis);
-  const [enhancementData, setEnhancementData] = useState(initial.enhancementData);
 
   // History state
   const [historyList, setHistoryList] = useState(initial.historyList);
@@ -179,12 +165,6 @@ export function AppProvider({ children }) {
 
   // User Profile state
   const [userProfile, setUserProfile] = useState(initial.userProfile);
-
-  // Mock interview state — interviewQuestions is a static practice prompt bank (read-only)
-  const [interviewQuestions] = useState(mockInterviewQuestions);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(initial.currentQuestionIndex);
-  const [interviewAnswers, setInterviewAnswers] = useState(initial.interviewAnswers);
-  const [interviewResults, setInterviewResults] = useState(initial.interviewResults);
 
   // Global Toasts system
   const [toasts, setToasts] = useState([]);
@@ -203,21 +183,32 @@ export function AppProvider({ children }) {
 
   /** Reset every piece of user-specific state to its initial (empty) value. */
   const resetUserState = useCallback(() => {
-    const s = getInitialUserState();
-    setResumeFile(s.resumeFile);
-    setJobDescription(s.jobDescription);
-    setAnalysisResult(s.analysisResult);
-    setGapAnalysis(s.gapAnalysis);
-    setEnhancementData(s.enhancementData);
-    setHistoryList(s.historyList);
+    const st = getInitialUserState();
+    setResumeFile(st.resumeFile);
+    setActiveJd(st.activeJd);
+    setJobDescription(st.jobDescription);
+    setAnalysisResult(st.analysisResult);
+    setGapAnalysis(st.gapAnalysis);
+    setHistoryList(st.historyList);
     setHistoryError(null);
     setIsHistoryLoading(false);
     setHistoryMeta(EMPTY_HISTORY_META);
     historyReqRef.current += 1;
-    setInterviewAnswers(s.interviewAnswers);
-    setCurrentQuestionIndex(s.currentQuestionIndex);
-    setInterviewResults(s.interviewResults);
-    setUserProfile(s.userProfile);
+    setUserProfile(st.userProfile);
+    clearUserStorage({ keepToken: true });
+  }, []);
+
+  /** DEMO_MODE only: seed sample data. The seed module is never loaded otherwise. */
+  const applyDemoSeed = useCallback(async () => {
+    // Inline env check so the bundler statically drops the demo chunk from normal builds.
+    if (import.meta.env.VITE_DEMO_MODE !== 'true') return;
+    const { getDemoUserState } = await import('../demo/seed');
+    const d = getDemoUserState();
+    setResumeFile(d.resumeFile);
+    setJobDescription(d.jobDescription);
+    setAnalysisResult(d.analysisResult);
+    setHistoryList(d.historyList);
+    setUserProfile(d.userProfile);
   }, []);
 
   /**
@@ -292,15 +283,36 @@ export function AppProvider({ children }) {
     }
   }, [showToast]);
 
+  /** Restore a summary of the user's latest analysis so the dashboard reflects real persisted data. */
+  const restoreLatestAnalysis = useCallback(async () => {
+    const session = sessionRef.current;
+    try {
+      const list = await api.analyses.list({ limit: 1 });
+      const id = list?.data?.[0]?.id;
+      if (!id) return;
+      const res = await api.analyses.get(id);
+      if (session !== sessionRef.current) return;
+      setAnalysisResult((prev) => prev ?? buildAnalysisSummary(res?.data));
+    } catch (err) {
+      if (session !== sessionRef.current) return;
+      console.error('Failed to restore latest analysis:', err);
+    }
+  }, []);
+
   /** Apply a freshly authenticated user: clean state, then set user + profile, then load history. */
   const applyAuthenticatedUser = useCallback((user) => {
     sessionRef.current += 1;
     resetUserState();
     setCurrentUser(user);
     setUserProfile({ ...EMPTY_PROFILE, name: user?.name || '', email: user?.email || '' });
+    if (DEMO_MODE) {
+      applyDemoSeed();
+      return;
+    }
     fetchBackendHistory();
     restoreLatestResume();
-  }, [resetUserState, fetchBackendHistory, restoreLatestResume]);
+    restoreLatestAnalysis();
+  }, [resetUserState, fetchBackendHistory, restoreLatestResume, restoreLatestAnalysis, applyDemoSeed]);
 
   // ─── Auth Actions ────────────────────────────────────────────────────────────
 
@@ -327,8 +339,20 @@ export function AppProvider({ children }) {
       console.error('Server logout failed (local session cleared anyway):', err);
     }
     resetUserState();
+    clearUserStorage({ keepToken: false });
     setCurrentUser(null);
   }, [resetUserState]);
+
+  // Any 401 from a protected endpoint ends the session locally; ProtectedRoute then redirects to /login.
+  useEffect(() => {
+    api.setUnauthorizedHandler(() => {
+      sessionRef.current += 1;
+      resetUserState();
+      setCurrentUser(null);
+      showToast('Your session has expired. Please sign in again.', 'warning', 5000);
+    });
+    return () => api.setUnauthorizedHandler(null);
+  }, [resetUserState, showToast]);
 
   // ─── Session Restore on Mount ────────────────────────────────────────────────
 
@@ -338,7 +362,10 @@ export function AppProvider({ children }) {
       const session = ++sessionRef.current;
       try {
         const token = api.getToken();
-        if (!token) return;
+        if (!token) {
+          if (DEMO_MODE) applyDemoSeed();
+          return;
+        }
         const userRes = await api.auth.getMe();
         if (session !== sessionRef.current) return;
         if (userRes.data) {
@@ -363,40 +390,9 @@ export function AppProvider({ children }) {
     }
 
     restoreSession();
-  }, [applyAuthenticatedUser, resetUserState, showToast]);
+  }, [applyAuthenticatedUser, applyDemoSeed, resetUserState, showToast]);
 
   // ─── App Helpers ─────────────────────────────────────────────────────────────
-
-  const updateSectionStatus = (sectionId, status) => {
-    if (!enhancementData) return;
-    setEnhancementData((prev) => {
-      if (!prev?.sections) return prev;
-      const newSections = prev.sections.map((sec) => {
-        if (sec.id === sectionId) {
-          return { ...sec, status };
-        }
-        return sec;
-      });
-      return { ...prev, sections: newSections };
-    });
-    showToast(`Section ${status === 'accepted' ? 'accepted' : 'rejected'}.`, 'success');
-  };
-
-  const updateBulletStatus = (sectionId, bulletId, status) => {
-    if (!enhancementData) return;
-    setEnhancementData((prev) => {
-      if (!prev?.sections) return prev;
-      const newSections = prev.sections.map((sec) => {
-        if (sec.id === sectionId && sec.items) {
-          const newItems = sec.items.map((it) => (it.id === bulletId ? { ...it, status } : it));
-          return { ...sec, items: newItems };
-        }
-        return sec;
-      });
-      return { ...prev, sections: newSections };
-    });
-    showToast(`Suggestion ${status === 'accepted' ? 'accepted' : 'rejected'}.`, 'success');
-  };
 
   /**
    * Delete a history record on the backend, then remove it locally.
@@ -438,21 +434,19 @@ export function AppProvider({ children }) {
   const uploadResume = async (file) => {
     try {
       const res = await api.resumes.upload(file);
-      const uploadedData = {
-        id: res.data.id,
-        name: res.data.originalFilename,
-        size: `${Math.round(res.data.fileSize / 1024)} KB`,
-        lastModified: new Date(res.data.createdAt).toISOString().split('T')[0],
-        type: res.data.mimeType
-      };
+      const uploadedData = mapResumeRow(res.data);
       setResumeFile(uploadedData);
-      showToast('Resume uploaded and persisted to PostgreSQL backend!', 'success');
       return uploadedData;
     } catch (err) {
-      showToast(`Upload failed: ${err.message}`, 'error');
+      showToast(`Upload failed: ${describeApiError(err)}`, 'error');
       throw err;
     }
   };
+
+  /** Merge fresh fields (e.g. parseStatus after a parse call) into the active resume if it is still the same one. */
+  const patchResumeFile = useCallback((id, patch) => {
+    setResumeFile((prev) => (prev && prev.id === id ? { ...prev, ...patch } : prev));
+  }, []);
 
   return (
     <AppContext.Provider
@@ -469,17 +463,16 @@ export function AppProvider({ children }) {
         resumeFile,
         setResumeFile,
         uploadResume,
+        patchResumeFile,
         jobDescription,
         setJobDescription,
+        activeJd,
+        setActiveJd,
         // Analysis
         analysisResult,
         setAnalysisResult,
         gapAnalysis,
         setGapAnalysis,
-        enhancementData,
-        setEnhancementData,
-        updateSectionStatus,
-        updateBulletStatus,
         // History
         historyList,
         setHistoryList,
@@ -491,14 +484,6 @@ export function AppProvider({ children }) {
         // Profile
         userProfile,
         setUserProfile,
-        // Interview
-        interviewQuestions,
-        currentQuestionIndex,
-        setCurrentQuestionIndex,
-        interviewAnswers,
-        setInterviewAnswers,
-        interviewResults,
-        setInterviewResults,
         // Toasts
         toasts,
         showToast,

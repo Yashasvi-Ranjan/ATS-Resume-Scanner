@@ -38,6 +38,7 @@ export default function App() {
           <Route path="/analysis/results" element={<AnalysisResultsPage />} />
           <Route path="/analysis/results/:id" element={<AnalysisResultsPage />} />
           <Route path="/gap-analysis" element={<GapAnalysisPage />} />
+          <Route path="/gap-analysis/:id" element={<GapAnalysisPage />} />
           <Route path="/resume-enhancement" element={<ResumeEnhancementPage />} />
           <Route path="/mock-interview" element={<MockInterviewPage />} />
           <Route path="/mock-interview/results" element={<InterviewResultsPage />} />

@@ -180,9 +180,9 @@ export default function HistoryPage() {
                       </div>
                     </td>
                     <td className="py-3 px-5">
-                      <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-medium">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        <span>{item.status}</span>
+                      <span className={`inline-flex items-center gap-1 text-[11px] font-medium ${['FAILED', 'ABANDONED'].includes(item.status) ? 'text-rose-700' : ['COMPLETED', 'APPROVED'].includes(item.status) ? 'text-emerald-700' : 'text-amber-700'}`}>
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>{String(item.status || '').replace('_', ' ')}</span>
                       </span>
                     </td>
                     <td className="py-3 px-5 text-right">
@@ -195,16 +195,16 @@ export default function HistoryPage() {
                           title={item.detailsUrl ? undefined : 'Details not available'}
                           className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <span>View</span>
+                          <span>{isAnalysisType(item.type) ? "Open results" : item.type === "Resume Enhancement" ? "Open version" : item.status === "COMPLETED" ? "Open report" : "Resume"}</span>
                           <ExternalLink className="w-3 h-3 text-slate-500" />
                         </button>
-                        <button
+                        {isAnalysisType(item.type) && <button
                           onClick={() => handleDelete(item)}
                           className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                           title="Delete record"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        </button>}
                       </div>
                     </td>
                   </tr>

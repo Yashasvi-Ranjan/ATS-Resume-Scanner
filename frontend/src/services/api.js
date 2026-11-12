@@ -1,8 +1,25 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api/v1';
 
+export function saveBlob(blob, filename) {
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+const qs = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return query ? `?${query}` : '';
+};
+
 class ApiClient {
   constructor() {
     this.baseUrl = API_BASE_URL;
+    this.onUnauthorized = null;
   }
 
   getToken() {
@@ -15,6 +32,10 @@ class ApiClient {
     } else {
       localStorage.removeItem('cvats_token');
     }
+  }
+
+  setUnauthorizedHandler(fn) {
+    this.onUnauthorized = typeof fn === 'function' ? fn : null;
   }
 
   async request(endpoint, options = {}) {
@@ -31,39 +52,56 @@ class ApiClient {
       headers['Content-Type'] = 'application/json';
     }
 
+    let response;
     try {
-      const response = await fetch(url, {
-        ...options,
-        headers
-      });
-
-      if (response.status === 204) {
-        return { success: true };
-      }
-
-      // Check for file download response
-      const disposition = response.headers.get('content-disposition');
-      if (disposition && disposition.includes('attachment')) {
-        const blob = await response.blob();
-        return blob;
-      }
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        const error = new Error(data.message || `Request failed with status ${response.status}`);
-        error.status = response.status;
-        error.errors = data.errors || [];
-        throw error;
-      }
-
-      return data;
+      response = await fetch(url, { ...options, headers });
     } catch (err) {
-      if (!err.status && err.name === 'TypeError') {
-        err.message = 'Unable to connect to CVATS backend server. Please verify backend is running on port 5001.';
-      }
-      throw err;
+      const netErr = new Error(
+        'Unable to connect to CVATS backend server. Please verify the backend is running.'
+      );
+      netErr.isNetworkError = true;
+      netErr.cause = err;
+      throw netErr;
     }
+
+    if (response.status === 204) {
+      return { success: true };
+    }
+
+    // File download response
+    const disposition = response.headers.get('content-disposition');
+    if (response.ok && disposition && disposition.includes('attachment')) {
+      return response.blob();
+    }
+
+    let data = null;
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+
+    if (!response.ok) {
+      const error = new Error(data?.message || `Request failed with status ${response.status}`);
+      error.status = response.status;
+      error.errors = data?.errors || [];
+      // An expired/invalid session on a protected call: clear the token and let the app redirect to sign-in.
+      const isAuthEndpoint = /^\/auth\/(login|register)/.test(endpoint);
+      if (response.status === 401 && token && !isAuthEndpoint) {
+        this.setToken(null);
+        if (this.onUnauthorized) this.onUnauthorized(error);
+      }
+      throw error;
+    }
+
+    return data ?? { success: true };
+  }
+
+  /** GET a file endpoint and trigger a browser download. */
+  async downloadFile(endpoint, filename) {
+    const blob = await this.request(endpoint);
+    if (!(blob instanceof Blob)) throw new Error('The server did not return a file.');
+    saveBlob(blob, filename);
   }
 
   // Auth endpoints
@@ -131,17 +169,15 @@ class ApiClient {
 
     get: (id) => this.request(`/resumes/${id}`),
 
-    download: async (id, filename = 'resume.pdf') => {
-      const blob = await this.request(`/resumes/${id}/download`);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-    },
+    download: (id, filename = 'resume.pdf') => this.downloadFile(`/resumes/${id}/download`, filename),
+
+    parse: (id, opts = {}) =>
+      this.request(`/resumes/${id}/parse`, { method: 'POST', body: JSON.stringify(opts) }),
+
+    getParsed: (id) => this.request(`/resumes/${id}/parsed`),
+
+    updateParsed: (id, parsedData) =>
+      this.request(`/resumes/${id}/parsed`, { method: 'PATCH', body: JSON.stringify(parsedData) }),
 
     delete: (id) =>
       this.request(`/resumes/${id}`, {
@@ -170,6 +206,14 @@ class ApiClient {
         body: JSON.stringify(data)
       }),
 
+    parse: (id, opts = {}) =>
+      this.request(`/job-descriptions/${id}/parse`, { method: 'POST', body: JSON.stringify(opts) }),
+
+    getParsed: (id) => this.request(`/job-descriptions/${id}/parsed`),
+
+    updateParsed: (id, parsedData) =>
+      this.request(`/job-descriptions/${id}/parsed`, { method: 'PATCH', body: JSON.stringify(parsedData) }),
+
     delete: (id) =>
       this.request(`/job-descriptions/${id}`, {
         method: 'DELETE'
@@ -196,6 +240,18 @@ class ApiClient {
         method: 'DELETE'
       }),
 
+    getResult: (id) => this.request(`/analyses/${id}/result`),
+
+    retry: (id) => this.request(`/analyses/${id}/retry`, { method: 'POST' }),
+
+    getGapAnalysis: (id) => this.request(`/analyses/${id}/gap-analysis`),
+
+    generateRecommendations: (id, force = false) =>
+      this.request(`/analyses/${id}/recommendations/generate`, {
+        method: 'POST',
+        body: JSON.stringify({ force })
+      }),
+
     getRecommendations: (id) => this.request(`/analyses/${id}/recommendations`),
 
     addRecommendation: (id, data) =>
@@ -216,32 +272,28 @@ class ApiClient {
 
   // Resume Enhancement endpoints
   enhancements = {
-    create: (data) =>
-      this.request('/enhancements', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      }),
+    generate: (data) =>
+      this.request('/enhancements/generate', { method: 'POST', body: JSON.stringify(data) }),
 
-    list: (params = {}) => {
-      const query = new URLSearchParams(params).toString();
-      return this.request(`/enhancements${query ? `?${query}` : ''}`);
-    },
+    list: (params = {}) => this.request(`/enhancements${qs(params)}`),
 
     get: (id) => this.request(`/enhancements/${id}`),
 
+    compare: (id) => this.request(`/enhancements/${id}/compare`),
+
     getVersions: (id) => this.request(`/enhancements/${id}/versions`),
 
-    download: async (id, filename = 'enhanced-resume.txt') => {
-      const blob = await this.request(`/enhancements/${id}/download`);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-    }
+    /** Editing content creates a NEW version (returned). */
+    update: (id, data) =>
+      this.request(`/enhancements/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+
+    approve: (id) => this.request(`/enhancements/${id}/approve`, { method: 'POST' }),
+
+    download: (id, format = 'txt', filename) =>
+      this.downloadFile(
+        `/enhancements/${id}/download?format=${format === 'docx' ? 'docx' : 'txt'}`,
+        filename || `enhanced-resume.${format === 'docx' ? 'docx' : 'txt'}`
+      )
   };
 
   // Mock Interview endpoints
@@ -283,11 +335,16 @@ class ApiClient {
         body: JSON.stringify({ status })
       }),
 
-    addEvaluation: (id, data) =>
-      this.request(`/interviews/${id}/evaluations`, {
+    generateQuestions: (id, regenerate = false) =>
+      this.request(`/interviews/${id}/generate-questions`, {
         method: 'POST',
-        body: JSON.stringify(data)
+        body: JSON.stringify({ regenerate })
       }),
+
+    evaluateAnswer: (id, answerId) =>
+      this.request(`/interviews/${id}/answers/${answerId}/evaluate`, { method: 'POST' }),
+
+    complete: (id) => this.request(`/interviews/${id}/complete`, { method: 'POST' }),
 
     getReport: (id) => this.request(`/interviews/${id}/report`)
   };

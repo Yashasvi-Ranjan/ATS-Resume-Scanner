@@ -1,6 +1,8 @@
-import { AnalysisStatus } from '@prisma/client';
+import { AnalysisStatus, Prisma } from '@prisma/client';
 import prisma from '../config/prisma';
+import { withKeyedLock } from '../utils/keyedLock';
 import { ApiError } from '../utils/apiError';
+import { ANALYSIS_STALE_MS, AnalysisRunner, isStale } from '../ai/matching/analysisRunner';
 import { buildPaginationMeta, parsePagination } from '../utils/pagination';
 import {
   internalAnalysisEvaluationSchema,
@@ -12,8 +14,25 @@ export interface CreateAnalysisDTO {
   jobDescriptionId: string;
 }
 
+const ANALYSIS_INCLUDE = {
+  resume: {
+    select: { id: true, originalFilename: true, createdAt: true }
+  },
+  jobDescription: {
+    select: { id: true, title: true, companyName: true }
+  }
+} as const;
+
 export class AnalysisService {
   static async create(userId: string, data: CreateAnalysisDTO) {
+    return (await AnalysisService.createOrGetExisting(userId, data)).analysis;
+  }
+
+  /**
+   * Creates a PENDING analysis and starts the runner in the background. If a fresh PENDING/PROCESSING
+   * analysis already exists for the same user + resume + JD, that record is returned instead (created=false).
+   */
+  static async createOrGetExisting(userId: string, data: CreateAnalysisDTO) {
     // 1. Verify resume belongs to user
     const resume = await prisma.resume.findUnique({
       where: { id: data.resumeId }
@@ -36,31 +55,88 @@ export class AnalysisService {
       throw ApiError.forbidden('You do not own the specified job description');
     }
 
-    // 3. Create analysis record. Built from explicit fields only: status is assigned
-    // server-side (PENDING); scores stay null (DB default) and arrays start empty.
-    // Nothing else from the request is ever copied into the record.
-    const analysis = await prisma.jobAnalysis.create({
+    // 2b/3. Duplicate protection + create, serialised per (user, resume, JD) so concurrent POSTs share one record.
+    const analysis = await withKeyedLock(`analysis:${userId}:${data.resumeId}:${data.jobDescriptionId}`, async () => {
+      // 2b. Duplicate protection: reuse an in-flight analysis for the same resume + JD.
+      const inFlight = await prisma.jobAnalysis.findFirst({
+        where: {
+          userId,
+          resumeId: data.resumeId,
+          jobDescriptionId: data.jobDescriptionId,
+          status: { in: [AnalysisStatus.PENDING, AnalysisStatus.PROCESSING] },
+          updatedAt: { gt: new Date(Date.now() - ANALYSIS_STALE_MS) }
+        },
+        orderBy: { createdAt: 'desc' },
+        include: ANALYSIS_INCLUDE
+      });
+      if (inFlight) return { record: inFlight, created: false };
+
+      // 3. Create analysis record. Built from explicit fields only: status is assigned
+      // server-side (PENDING); scores stay null (DB default) and arrays start empty.
+      // Nothing else from the request is ever copied into the record.
+      const record = await prisma.jobAnalysis.create({
+        data: {
+          userId,
+          resumeId: data.resumeId,
+          jobDescriptionId: data.jobDescriptionId,
+          status: AnalysisStatus.PENDING,
+          strengths: [],
+          weaknesses: [],
+          suggestions: [],
+          missingSkills: []
+        },
+        include: ANALYSIS_INCLUDE
+      });
+      return { record, created: true };
+    });
+    if (!analysis.created) return { analysis: analysis.record, created: false };
+    const created = analysis.record;
+    if (AnalysisRunner.autoStart) AnalysisRunner.runInBackground(created.id);
+    return { analysis: created, created: true };
+  }
+
+  /** Re-run a FAILED (or abandoned PENDING/PROCESSING) analysis. 409 when completed or actively running. */
+  static async retry(userId: string, id: string) {
+    const existing = await this.getById(userId, id);
+    const retryable = existing.status === AnalysisStatus.FAILED || isStale(existing);
+    if (!retryable) {
+      throw ApiError.conflict(
+        existing.status === AnalysisStatus.COMPLETED
+          ? 'This analysis is already completed'
+          : 'This analysis is already being processed'
+      );
+    }
+    const reset = await prisma.jobAnalysis.updateMany({
+      where: { id, updatedAt: existing.updatedAt, status: existing.status },
       data: {
-        userId,
-        resumeId: data.resumeId,
-        jobDescriptionId: data.jobDescriptionId,
         status: AnalysisStatus.PENDING,
+        errorMessage: null,
+        overallScore: null,
+        skillsScore: null,
+        experienceScore: null,
+        keywordsScore: null,
+        educationScore: null,
+        projectRelevanceScore: null,
         strengths: [],
         weaknesses: [],
         suggestions: [],
-        missingSkills: []
-      },
-      include: {
-        resume: {
-          select: { id: true, originalFilename: true, createdAt: true }
-        },
-        jobDescription: {
-          select: { id: true, title: true, companyName: true }
-        }
+        missingSkills: [],
+        resultData: Prisma.DbNull,
+        scoringVersion: null,
+        modelInfo: null,
+        inputHash: null,
+        startedAt: null,
+        completedAt: null
       }
     });
+    if (reset.count === 0) throw ApiError.conflict('This analysis is already being processed');
+    if (AnalysisRunner.autoStart) AnalysisRunner.runInBackground(id);
+    return this.getById(userId, id);
+  }
 
-    return analysis;
+  static async getResult(userId: string, id: string) {
+    const a = await this.getById(userId, id);
+    return { status: a.status, errorMessage: a.errorMessage, result: a.status === AnalysisStatus.COMPLETED ? a.resultData ?? null : null };
   }
 
   /**
@@ -116,7 +192,30 @@ export class AnalysisService {
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
-        include: {
+        // Explicit select: the heavy resultData JSON is deliberately excluded from list responses.
+        select: {
+          id: true,
+          userId: true,
+          resumeId: true,
+          jobDescriptionId: true,
+          status: true,
+          overallScore: true,
+          skillsScore: true,
+          experienceScore: true,
+          keywordsScore: true,
+          educationScore: true,
+          projectRelevanceScore: true,
+          strengths: true,
+          weaknesses: true,
+          suggestions: true,
+          missingSkills: true,
+          errorMessage: true,
+          scoringVersion: true,
+          modelInfo: true,
+          startedAt: true,
+          completedAt: true,
+          createdAt: true,
+          updatedAt: true,
           resume: {
             select: { id: true, originalFilename: true }
           },

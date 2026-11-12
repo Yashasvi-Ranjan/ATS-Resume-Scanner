@@ -5,6 +5,35 @@ import { defaultStorageService } from './storage.service';
 import { validateResumeFile } from '../utils/fileValidator';
 import { ApiError } from '../utils/apiError';
 import { buildPaginationMeta, parsePagination } from '../utils/pagination';
+import { Prisma, Resume } from '@prisma/client';
+import {
+  ParseOptions,
+  ResumeParserService,
+  getEffectiveResumeData
+} from '../ai/resume/resumeParser.service';
+import { StructuredResume } from '../ai/schemas/resume.schema';
+import { canonicalSkillKey, normalizeSkill } from '../ai/skills';
+import { estimateTotalMonths } from '../ai/resume/textUtils';
+
+type ResumeRow = Resume;
+
+/** Public representation: never includes the full extracted text or parsed payloads unless asked. */
+export function toResumeDto(resume: ResumeRow, opts: { includeParsed?: boolean } = {}) {
+  const { extractedText, parsedData, userEditedData, ...rest } = resume;
+  return {
+    ...rest,
+    extractedTextLength: extractedText ? extractedText.length : 0,
+    hasParsedData: parsedData !== null && parsedData !== undefined,
+    hasUserEdits: userEditedData !== null && userEditedData !== undefined,
+    ...(opts.includeParsed ? { parsedData, userEditedData } : {})
+  };
+}
+
+const LIST_SELECT = {
+  id: true, userId: true, originalFilename: true, storedFilename: true, mimeType: true,
+  fileSize: true, storagePath: true, parseStatus: true, parseError: true, parsedAt: true,
+  parserVersion: true, contentHash: true, createdAt: true, updatedAt: true
+} satisfies Prisma.ResumeSelect;
 
 export class ResumeService {
   static async uploadResume(
@@ -36,7 +65,9 @@ export class ResumeService {
       }
     });
 
-    return resume;
+    // Extract text synchronously; failures are recorded on the record, never delete the upload.
+    const updated = await ResumeParserService.extractOnUpload(resume, validFile.buffer);
+    return toResumeDto(updated);
   }
 
   static async listUserResumes(
@@ -51,7 +82,8 @@ export class ResumeService {
         where: { userId },
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
+        select: LIST_SELECT
       })
     ]);
 
@@ -73,6 +105,72 @@ export class ResumeService {
     }
 
     return resume;
+  }
+
+  static async parseResume(userId: string, resumeId: string, opts: ParseOptions) {
+    const resume = await ResumeParserService.parseResume(userId, resumeId, opts);
+    return toResumeDto(resume, { includeParsed: true });
+  }
+
+  static async getParsed(userId: string, resumeId: string) {
+    const resume = await this.getResumeById(userId, resumeId);
+    return {
+      parseStatus: resume.parseStatus,
+      parseError: resume.parseError,
+      parsedData: resume.parsedData,
+      userEditedData: resume.userEditedData,
+      effective: getEffectiveResumeData(resume),
+      parsedAt: resume.parsedAt,
+      parserVersion: resume.parserVersion
+    };
+  }
+
+  /** Store user corrections. Skills not produced by the parser are marked source 'user'. */
+  static async updateParsed(userId: string, resumeId: string, body: StructuredResume) {
+    const resume = await this.getResumeById(userId, resumeId);
+    const parsed = resume.parsedData as unknown as StructuredResume | null;
+    if (!parsed) {
+      throw ApiError.conflict('Resume must be parsed before its data can be edited');
+    }
+    if (resume.parseStatus === 'PROCESSING') {
+      throw ApiError.conflict('Resume is being parsed; try again when it finishes');
+    }
+    const parsedKeys = new Set((parsed.skills ?? []).map((s) => canonicalSkillKey(s.canonical || s.name)));
+    const seen = new Set<string>();
+    const skills = [];
+    for (const sk of body.skills) {
+      const canonical = normalizeSkill(sk.name);
+      const key = canonicalSkillKey(sk.name);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      skills.push({
+        ...sk,
+        canonical,
+        source: parsedKeys.has(key) ? sk.source : ('user' as const),
+        confidence: parsedKeys.has(key) ? sk.confidence : ('explicit' as const)
+      });
+    }
+    const experience = body.experience.map((e, i) => ({
+      ...e,
+      id: e.id || `exp-${i + 1}`,
+      bullets: e.bullets.map((b, j) => ({ ...b, id: b.id || `exp-${i + 1}-b${j + 1}` }))
+    }));
+    const clean: StructuredResume = {
+      ...body,
+      skills,
+      experience,
+      projects: body.projects.map((p, i) => ({ ...p, id: p.id || `proj-${i + 1}` })),
+      education: body.education.map((e, i) => ({ ...e, id: e.id || `edu-${i + 1}` })),
+      // server-owned fields
+      sectionsDetected: parsed.sectionsDetected ?? [],
+      parseWarnings: parsed.parseWarnings ?? [],
+      totalExperienceMonthsEstimate: estimateTotalMonths(experience)
+    };
+    const updated = await prisma.resume.update({
+      where: { id: resumeId },
+      data: { userEditedData: clean as unknown as Prisma.InputJsonValue }
+    });
+    return toResumeDto(updated, { includeParsed: true });
   }
 
   static async getResumeFileForDownload(userId: string, resumeId: string) {

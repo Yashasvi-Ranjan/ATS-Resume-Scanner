@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ResumeService } from '../services/resume.service';
+import { ResumeService, toResumeDto } from '../services/resume.service';
 import { ApiResponse } from '../utils/apiResponse';
 
 export class ResumeController {
@@ -24,7 +24,37 @@ export class ResumeController {
   static async getResumeById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const resume = await ResumeService.getResumeById(req.user!.id, req.params.id as string);
-      ApiResponse.success(res, 'Resume metadata retrieved successfully', resume);
+      ApiResponse.success(res, 'Resume metadata retrieved successfully', toResumeDto(resume));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async parseResume(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const resume = await ResumeService.parseResume(req.user!.id, req.params.id as string, {
+        force: req.body?.force,
+        resetEdits: req.body?.resetEdits
+      });
+      ApiResponse.success(res, 'Resume parsed successfully', resume);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getParsed(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const data = await ResumeService.getParsed(req.user!.id, req.params.id as string);
+      ApiResponse.success(res, 'Parsed resume retrieved successfully', data);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async updateParsed(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const resume = await ResumeService.updateParsed(req.user!.id, req.params.id as string, req.body);
+      ApiResponse.success(res, 'Parsed resume updated successfully', resume);
     } catch (error) {
       next(error);
     }
