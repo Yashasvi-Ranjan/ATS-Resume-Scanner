@@ -39,6 +39,21 @@ const EMPTY_PROFILE = {
   skills: []
 };
 
+/** Build the profile form state from a backend user record. */
+export function profileFromUser(user) {
+  return {
+    ...EMPTY_PROFILE,
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    location: user?.location || '',
+    targetRole: user?.targetRole || '',
+    experienceLevel: user?.experienceLevel || '',
+    headline: user?.headline || '',
+    skills: Array.isArray(user?.skills) ? user.skills : []
+  };
+}
+
 /**
  * Initial user-specific state. Always empty: real users start from backend data only.
  * Sample data exists only in DEMO_MODE and is loaded lazily from ../demo/seed.
@@ -305,7 +320,7 @@ export function AppProvider({ children }) {
     sessionRef.current += 1;
     resetUserState();
     setCurrentUser(user);
-    setUserProfile({ ...EMPTY_PROFILE, name: user?.name || '', email: user?.email || '' });
+    setUserProfile(profileFromUser(user));
     if (DEMO_MODE) {
       applyDemoSeed();
       return;

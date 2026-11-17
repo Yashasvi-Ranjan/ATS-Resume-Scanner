@@ -56,6 +56,12 @@ model User {
   email        String             @unique
   passwordHash String
   name         String
+  phone           String?
+  location        String?
+  targetRole      String?
+  experienceLevel String?
+  headline        String?
+  skills          String[]           @default([])
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
 

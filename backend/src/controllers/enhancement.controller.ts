@@ -89,7 +89,7 @@ export class EnhancementController {
         format
       );
       res.setHeader('Content-Type', mimeType);
-      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`);
       res.send(buffer);
     } catch (error) {
       next(error);
