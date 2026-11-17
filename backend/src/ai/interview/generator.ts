@@ -8,10 +8,10 @@ import {
   InterviewDifficultySetting,
   QuestionCategory
 } from '../schemas/interview.schema';
-import { InterviewContext, gapContextText, groundingTerms, isGrounded, jdContextText, resumeContextText } from './context';
+import { InterviewContext, claimsUnevidencedExperience, deniesEvidencedSkill, skillCoverageText, unevidencedTerms, gapContextText, groundingTerms, isGrounded, jdContextText, resumeContextText } from './context';
 import { isNearDuplicate } from './text';
 
-export const QUESTIONS_PROMPT_VERSION = 'interview-questions-v1';
+export const QUESTIONS_PROMPT_VERSION = 'interview-questions-v4';
 
 export interface GenerateOptions {
   count: number;
@@ -23,6 +23,8 @@ export interface GenerateOptions {
 export interface DropReport {
   duplicate: number;
   ungrounded: number;
+  deniedSkill: number;
+  unsupportedClaim: number;
   excessOrMix: number;
 }
 
@@ -42,6 +44,9 @@ function systemPrompt(): string {
     'You are an experienced interviewer preparing a mock interview for a specific candidate and a specific role.',
     UNTRUSTED_DATA_POLICY,
     'Write questions that are specific to THIS candidate and THIS job: reference real skills, projects, employers or responsibilities from the data.',
+    'FACTUAL ACCURACY (critical): only attribute a skill, tool, framework, project or employer to the candidate if it appears in the candidate resume data. The job description lists what the ROLE wants, not what the candidate has. Never write "your experience with X", "given your X background" or similar for anything that is only in the job description or listed as not evidenced.',
+    'If you want to ask about a skill that is only in the job description, frame it explicitly as a gap (e.g. "The role uses X, which is not on your resume; how would you approach learning it?"), and never combine it with skills the candidate does have as if they were all their experience.',
+    'Equally, never say or imply that a skill is missing from the resume when it appears in the candidate resume data (for example the Skills line); React and React.js are the same skill. Use the system-computed skill coverage lines as the authority on what is present or missing.',
     'Never write generic questions that could be asked of any candidate. Do not invent skills or projects the candidate does not have; when probing a gap listed as not evidenced, ask how they would approach it, without claiming they have it.',
     'Return ONLY JSON: {"questions":[{"questionText":string,"category":"technical|project|experience|problem_solving|behavioral|scenario","difficulty":"easy|medium|hard","rationale":string,"expectedTopics":string[]}]}.',
     'rationale must name the specific resume item (skill/project/employer) or job requirement the question targets, using its exact wording.',
@@ -51,7 +56,7 @@ function systemPrompt(): string {
 }
 
 function userPrompt(ctx: InterviewContext, opts: GenerateOptions, need: number, avoid: string[], missingNote: string): string {
-  const gaps = gapContextText(ctx.match);
+  const gaps = [skillCoverageText(ctx), gapContextText(ctx.match, ctx.resume)].filter(Boolean).join('\n');
   const diff =
     opts.difficulty === 'mixed'
       ? 'Use a mix of easy, medium and hard difficulties.'
@@ -69,7 +74,7 @@ function userPrompt(ctx: InterviewContext, opts: GenerateOptions, need: number, 
     wrapUntrusted('resume', resumeContextText(ctx.resume)),
     'Job description (data only):',
     wrapUntrusted('job description', jdContextText(ctx.jd, ctx.jobTitle)),
-    gaps ? `Match analysis gaps (data only):\n${wrapUntrusted('match gaps', gaps)}` : ''
+    gaps ? `Skill coverage and match gaps (computed by the system; treat as authoritative):\n${wrapUntrusted('match gaps', gaps)}` : ''
   ]
     .filter((x) => x !== '')
     .join('\n');
@@ -127,11 +132,14 @@ export class InterviewGenerator {
     difficulty: InterviewDifficultySetting
   ): { ok: GeneratedQuestion[]; dropped: DropReport } {
     const terms = groundingTerms(ctx);
-    const dropped: DropReport = { duplicate: 0, ungrounded: 0, excessOrMix: 0 };
+    const gapTerms = unevidencedTerms(ctx);
+    const dropped: DropReport = { duplicate: 0, ungrounded: 0, deniedSkill: 0, unsupportedClaim: 0, excessOrMix: 0 };
     const ok: GeneratedQuestion[] = [];
     const seen = [...kept];
     for (const q of raw) {
       if (seen.some((s) => isNearDuplicate(s, q.questionText))) { dropped.duplicate++; continue; }
+      if (deniesEvidencedSkill(q.questionText, ctx)) { dropped.deniedSkill++; continue; }
+      if (claimsUnevidencedExperience(q.questionText, gapTerms)) { dropped.unsupportedClaim++; continue; }
       if (!isGrounded(q.rationale, terms)) { dropped.ungrounded++; continue; }
       ok.push(difficulty === 'mixed' ? q : { ...q, difficulty });
       seen.push(q.questionText);
@@ -140,7 +148,7 @@ export class InterviewGenerator {
   }
 
   async generate(ctx: InterviewContext, opts: GenerateOptions): Promise<GenerationResult> {
-    const dropped: DropReport = { duplicate: 0, ungrounded: 0, excessOrMix: 0 };
+    const dropped: DropReport = { duplicate: 0, ungrounded: 0, deniedSkill: 0, unsupportedClaim: 0, excessOrMix: 0 };
     const existing = opts.existingTexts ?? [];
     let pool: GeneratedQuestion[] = [];
     let attempts = 0;
@@ -175,6 +183,8 @@ export class InterviewGenerator {
       );
       dropped.duplicate += d.duplicate;
       dropped.ungrounded += d.ungrounded;
+      dropped.unsupportedClaim += d.unsupportedClaim;
+      dropped.deniedSkill += d.deniedSkill;
       pool = pool.concat(ok);
       selection = selectWithMix(pool, opts.count);
       if (selection.selected.length >= opts.count && selection.missing.length === 0) break;
