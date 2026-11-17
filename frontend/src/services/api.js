@@ -70,7 +70,11 @@ class ApiClient {
 
     // File download response
     const disposition = response.headers.get('content-disposition');
-    if (response.ok && disposition && disposition.includes('attachment')) {
+    const contentType = response.headers.get('content-type') || '';
+    const isFile =
+      (disposition && disposition.includes('attachment')) ||
+      /wordprocessingml|application\/octet-stream|application\/pdf|text\/plain/.test(contentType);
+    if (response.ok && isFile) {
       return response.blob();
     }
 

@@ -6,7 +6,7 @@ import {
   Plus,
   X
 } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useApp, profileFromUser } from '../context/AppContext';
 import { api } from '../services/api';
 
 export default function ProfilePage() {
@@ -41,7 +41,7 @@ export default function ProfilePage() {
       if (me) {
         if (me.id !== userId) return; // stale: belongs to a different session
         setCounts(me._count || null);
-        setUserProfile((prev) => ({ ...(prev || {}), name: me.name || '', email: me.email || '' }));
+        setUserProfile(profileFromUser(me));
       }
     } catch (err) {
       if (!mountedRef.current) return;
@@ -98,14 +98,18 @@ export default function ProfilePage() {
     e.preventDefault();
     if (isSaving) return;
 
-    // Only name and email are persisted by the backend (PATCH /auth/profile).
+    const trim = (v) => (v || '').trim();
+    const name = trim(formData.name);
+    const email = trim(formData.email);
+    const saved0 = profileFromUser({ ...currentUser, ...userProfile });
     const payload = {};
-    const name = (formData.name || '').trim();
-    const email = (formData.email || '').trim();
-    const savedName = userProfile?.name || currentUser?.name || '';
-    const savedEmail = userProfile?.email || currentUser?.email || '';
-    if (name && name !== savedName) payload.name = name;
-    if (email && email.toLowerCase() !== savedEmail.toLowerCase()) payload.email = email;
+    if (name && name !== saved0.name) payload.name = name;
+    if (email && email.toLowerCase() !== saved0.email.toLowerCase()) payload.email = email;
+    ['phone', 'location', 'targetRole', 'experienceLevel', 'headline'].forEach((k) => {
+      if (trim(formData[k]) !== trim(saved0[k])) payload[k] = trim(formData[k]);
+    });
+    const skills = formData.skills || [];
+    if (JSON.stringify(skills) !== JSON.stringify(saved0.skills)) payload.skills = skills;
 
     setIsSaving(true);
     setFieldErrors([]);
@@ -130,17 +134,12 @@ export default function ProfilePage() {
 
     if (saved) {
       setCurrentUser((prev) => ({ ...(prev || {}), ...saved }));
-      setUserProfile({ ...formData, name: saved.name ?? formData.name, email: saved.email ?? formData.email });
-    } else {
-      setUserProfile(formData);
+      setUserProfile(profileFromUser(saved));
     }
     if (!mountedRef.current) return;
     setIsSaving(false);
     setIsSaved(true);
-    const savedFields = Object.keys(payload).length > 0
-      ? `${Object.keys(payload).map((k) => (k === 'name' ? 'Name' : 'Email')).join(' and ')} saved.`
-      : 'Name and email unchanged.';
-    showToast(`${savedFields} Other profile fields are stored for this session only.`, 'success');
+    showToast(Object.keys(payload).length > 0 ? 'Profile saved.' : 'No changes to save.', 'success');
 
     setTimeout(() => setIsSaved(false), 2000);
   };
