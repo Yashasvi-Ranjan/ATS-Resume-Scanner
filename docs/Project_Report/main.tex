@@ -1,0 +1,459 @@
+\documentclass{tietreport}
+
+% Import images
+\usepackage{graphicx}
+\graphicspath{{../}} % existing project diagrams live in docs/
+
+% Bibliography configuration
+\usepackage[
+  date=year,
+  style=alphabetic,
+  backend=biber,
+  sorting=nty,
+  maxnames=5,
+  minnames=3,
+  maxalphanames=4,
+  minalphanames=3,
+  backref=true,
+  doi=false,
+  isbn=false,
+  url=false,
+  eprint=false
+]{biblatex}
+\addbibresource{references.bib}
+
+%% ==================================================
+%% CUSTOMIZE THESE FIELDS FOR YOUR PROJECT
+%% ==================================================
+
+% Course/Lab header
+\TitlePageHeader{%
+  UCS503P - Software Engineering Project%
+}
+
+% Main project title
+\ProjectTitle{%
+  CVATS -- AI-Powered ATS Resume Scanner%
+}
+
+% Subtitle or project description
+\ProjectSubTitle{%
+  Job-Description-Based Resume Matching, Gap Analysis,
+  Resume Enhancement and Mock Interview System%
+}
+
+% Student information (up to 4 students)
+\author{%
+  \texttt{1024030509} Yashasvi Ranjan \\
+  \texttt{1024030508} Kamesh Yadav \\
+  \texttt{1024030499} Taniksha \\
+  \texttt{1024030521} Anshika%
+}
+
+% Group number, degree, year, program
+\TitlePageSubText{%
+  Group: \texttt{CVATS} BE Third Year, CSE%
+}
+
+% Faculty advisor/guide name
+\AdvisorName{%
+  Dr. Nisha Thakur%
+}
+
+% Evaluation period and department info
+\TitlePageFooterText{{%
+    \large Mid-Semester Evaluation \\[0.2cm]
+    \bfseries Computer Science and Engineering
+    Department%
+  } \\[0.15cm]
+  Thapar Institute of Engineering and Technology,
+  Patiala%
+}
+
+%% ==================================================
+
+\begin{document}
+
+% Generate title page
+\maketitle
+
+% Table of contents (auto-generated from chapters)
+\tableofcontents
+
+% ===== CHAPTER 1: INTRODUCTION =====
+
+\chapter{Introduction}
+
+\section{Background and Context}
+
+Applicant tracking systems (ATS) are used by most employers to filter
+resumes before a human recruiter reads them. Job seekers rarely see how
+their resume is judged, and a well-qualified candidate can be rejected
+because skills are phrased differently from the job description (JD) or
+because relevant experience is buried. Existing resume checkers are
+usually opaque: they return a single number with no evidence, and
+generative tools may ``improve'' a resume by inventing skills or
+achievements the candidate never had.
+
+CVATS is a tool for \emph{job seekers}, not a recruiter or HR screening
+platform. A user uploads a resume, pastes a job description, and the
+system walks them through resume parsing, JD parsing, an explainable
+match score, gap analysis, grounded resume enhancement, a role-specific
+mock interview, and a stored history of all results~\cite{cvatsrepo}. The
+match score is an estimate and is not an official score from any
+employer's ATS.
+
+\subsection{Problem Statement}
+
+Job seekers lack a transparent, trustworthy way to understand how well a
+resume matches a specific job description, what exactly is missing, and
+how to improve and rehearse. Current tools either give unexplained scores
+or use large language models (LLMs) in ways that can fabricate content.
+The problem tackled here is to build a deployable web system that
+(i) computes a reproducible, evidence-backed match score,
+(ii) separates \emph{weakly presented} content from \emph{genuinely
+missing} content, (iii) rewrites resume text without inventing facts, and
+(iv) prepares the user for interviews, while degrading honestly when the
+AI provider is unavailable.
+
+\section{Project Objectives}
+
+\begin{enumerate}
+  \item \textbf{Structured parsing:} Extract text from PDF/DOCX resumes and
+    pasted JDs into structured, user-correctable data in which every
+    parsed item traces back to the source text.
+  \item \textbf{Explainable matching:} Produce a deterministic, weighted
+    match score over skills, experience, keywords, education and projects,
+    with evidence, deductions and confidence per category.
+  \item \textbf{Gap analysis:} Classify findings as \emph{Things to Improve}
+    or \emph{Things to Learn/Add}, with priorities, suggested actions and
+    saved progress.
+  \item \textbf{Grounded enhancement:} Generate reworded resume content
+    validated against the original so that invented skills, numbers,
+    employers, titles, dates and credentials are reverted.
+  \item \textbf{Mock interview:} Generate role-specific questions from the
+    resume, JD and gaps, evaluate answers as coaching feedback, and store a
+    final report.
+  \item \textbf{Secure and deployable:} Provide authenticated, owner-scoped
+    access with a REST API, documented with Swagger, and a deployable
+    React frontend and Node.js backend.
+\end{enumerate}
+
+These objectives were defined to be specific and measurable: each maps to
+a concrete API area and database entity that can be demonstrated to
+evaluators.
+
+% ===== CHAPTER 2: METHODOLOGY & DESIGN =====
+
+\chapter{Methodology and Design}
+
+\section{System Architecture}
+
+CVATS follows a three-tier architecture: a single-page React client, a
+stateless Express REST API, and a PostgreSQL database accessed through the
+Prisma ORM. All LLM calls are made only from the backend, behind a
+provider abstraction, so API keys never reach the browser.
+Figure~\ref{fig:dfd0} shows the context-level data flow and
+Figure~\ref{fig:component} the component structure.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{"DFD_0-Level DFD.drawio.png"}
+\caption{Level-0 data flow diagram of CVATS}
+\label{fig:dfd0}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.75\textwidth]{"component_diagram.drawio.png"}
+\caption{Component diagram}
+\label{fig:component}
+\end{figure}
+
+\subsection{High-Level Design}
+
+The user registers and logs in (JWT), uploads a resume and submits a JD.
+Both are parsed into structured JSON validated by Zod schemas. Starting an
+analysis creates a record with status \texttt{PENDING}; a background
+runner moves it through \texttt{PROCESSING} to \texttt{COMPLETED} or
+\texttt{FAILED}, and the client polls for progress. The deterministic
+scoring engine computes the match; recommendations, enhancement versions
+and interview sessions are generated from that analysis and persisted.
+Figures~\ref{fig:class} and~\ref{fig:sequence} give the class structure and
+the main interaction sequence, and Figure~\ref{fig:deploy} the deployment
+view.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{"class_diagram.drawio.png"}
+\caption{Class diagram}
+\label{fig:class}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[height=0.6\textheight]{"Sequence Diagram.drawio.png"}
+\caption{Sequence diagram of the analysis workflow}
+\label{fig:sequence}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{"cvats_deploymentDiagarm.png"}
+\caption{Deployment diagram}
+\label{fig:deploy}
+\end{figure}
+
+\subsection{Technical Stack}
+
+\begin{itemize}
+  \item \textbf{Framework/Language:} Frontend in React 18 with Vite,
+    Tailwind CSS and React Router; backend in Node.js, Express and
+    TypeScript, with Zod for validation.
+  \item \textbf{Database:} PostgreSQL with Prisma ORM and additive
+    migrations; entities include User, Resume, JobDescription,
+    JobAnalysis, AnalysisRecommendation, ResumeEnhancement and the
+    interview session, question, answer and evaluation tables.
+  \item \textbf{Tools:} Git, Swagger UI for API documentation, Jest for
+    tests, and Vercel configuration for frontend deployment.
+  \item \textbf{Libraries:} \texttt{pdf-parse} (PDF), \texttt{mammoth}
+    (DOCX), \texttt{bcryptjs}, \texttt{jsonwebtoken}, \texttt{helmet},
+    \texttt{express-rate-limit}, \texttt{multer}. The LLM is Groq
+    (default model \texttt{openai/gpt-oss-120b}) behind an abstraction that
+    also supports OpenAI and OpenAI-compatible servers such as
+    Ollama~\cite{groqdocs,prisma}.
+\end{itemize}
+
+\section{Additional Design Diagrams}
+
+The following diagrams from the design phase complete the model of the system.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{"Use case Diagram.drawio.png"}
+\caption{Use case diagram}
+\label{fig:usecase}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[height=0.6\textheight]{"ACTIVITY DIAGRAM .drawio.png"}
+\caption{Activity diagram}
+\label{fig:activity}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{"SWIMLANE.drawio.png"}
+\caption{Swimlane diagram}
+\label{fig:swimlane}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{"Collaboration Diagram.drawio.png"}
+\caption{Collaboration diagram}
+\label{fig:collab}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{"DFD_1-Level DFD.drawio.png"}
+\caption{Level-1 data flow diagram}
+\label{fig:dfd1}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{"DFD_2-Level DFD.drawio.png"}
+\caption{Level-2 data flow diagram}
+\label{fig:dfd2}
+\end{figure}
+
+\section{Implementation Details}
+
+\subsection{Module 1: Parsing and Match Scoring}
+
+Resume text is extracted from PDF or DOCX (image-only PDFs are not
+supported, as there is no OCR) and converted to a structured resume
+(skills, experience, projects, education, certifications). The JD parser
+extracts required versus preferred skills, experience and education, with
+no hardcoded default requirements; the user may correct either result.
+
+The scoring engine is deterministic and reproducible. Each requirement is
+looked up in a skill taxonomy with normalisation and related-skill
+matching; the strongest single piece of evidence counts once, so
+repetition cannot inflate the score. Credit depends on evidence strength
+(demonstrated $=1$, claimed $=0.85$, listed $=0.7$), required items weigh
+three times preferred ones, and related skills earn half credit. The LLM
+may only help classify uncertain matches, and only when it cites a real
+resume snippet. The default category weights are in
+Table~\ref{tab:weights} and are normalised automatically.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|r|}
+  \hline
+  \textbf{Category} & \textbf{Default Weight} \\
+  \hline
+  Skills & 0.35 \\
+  \hline
+  Experience & 0.25 \\
+  \hline
+  Keywords & 0.15 \\
+  \hline
+  Projects & 0.15 \\
+  \hline
+  Education & 0.10 \\
+  \hline
+\end{tabular}
+\caption{Default match-score weights}
+\label{tab:weights}
+\end{table}
+
+\subsection{Module 2: Gap Analysis, Enhancement and Mock Interview}
+
+\textbf{Gap analysis} derives recommendations from the match result and
+separates \emph{Things to Improve} (present but weakly presented) from
+\emph{Things to Learn/Add} (genuinely missing), each with a priority,
+evidence, suggested actions and learning topics; progress is saved.
+
+\textbf{Resume enhancement} asks the LLM to reword content using only the
+original resume. A grounding validator compares the output with an index
+of the source and reverts invented skills, numbers, employers, titles,
+dates and credentials. Users get a side-by-side comparison, editing,
+versioning, approval and TXT/DOCX download; the original upload is never
+modified.
+
+\textbf{Mock interview} generates questions from the resume, JD and gaps,
+evaluates each answer as coaching feedback (not a hiring decision), allows
+sessions to be resumed, and stores a final report.
+
+\subsection{Module 3: Security and Reliability}
+
+Resumes, JDs and interview answers are treated as untrusted data and
+wrapped so embedded instructions are not followed. Scores and evaluations
+are written only by trusted server code. LLM output is validated against
+schemas, malformed output gets at most one repair attempt, retries are
+bounded, and calls are limited by a concurrency semaphore and queue.
+Passwords are hashed with bcrypt, routes are protected by JWT and scoped to
+the resource owner, and rate limiting applies per IP and per user on
+expensive AI endpoints. When the provider is unavailable the analysis is
+recorded as \texttt{FAILED}; fabricated results are never returned.
+
+% ===== CHAPTER 3: RESULTS & EVALUATION =====
+
+\chapter{Results and Evaluation}
+
+\section{Testing Methodology}
+
+\begin{itemize}
+  \item \textbf{Unit Testing:} Jest with ts-jest for the deterministic
+    components such as the scoring engine, weight normalisation, skill
+    normaliser and grounding validator.
+  \item \textbf{Integration Testing:} Jest integration tests against a
+    separate test database (\texttt{.env.test}) with Prisma migrations
+    applied, exercising the REST endpoints.
+  \item \textbf{Performance Testing:} Bounded LLM concurrency, queueing
+    and timeouts are configurable; formal load testing has not yet been
+    carried out.
+  \item \textbf{User Testing:} Manual end-to-end walkthroughs of the
+    complete flow, using the demo mode (\texttt{VITE\_DEMO\_MODE}) with
+    sample data, isolated from real workflows.
+\end{itemize}
+
+\section{Performance Metrics}
+
+No quantitative benchmark figures have been recorded yet, so none are
+reported. Table~\ref{tab:status} instead summarises the delivery status of
+each objective against the implemented system.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|}
+  \hline
+  \textbf{Objective} & \textbf{Evidence in System} &
+  \textbf{Status} \\
+  \hline
+  Structured parsing & Resume and JD parse endpoints & Implemented \\
+  \hline
+  Explainable matching & Deterministic engine, per-category evidence
+  & Implemented \\
+  \hline
+  Gap analysis & Improve vs.\ Learn/Add recommendations & Implemented \\
+  \hline
+  Grounded enhancement & Validator, versioning, DOCX/TXT export
+  & Implemented \\
+  \hline
+  Mock interview & Questions, evaluation, report & Implemented \\
+  \hline
+  Secure deployment & JWT, rate limits, Swagger, Vercel config
+  & Implemented \\
+  \hline
+\end{tabular}
+\caption{Objective delivery summary}
+\label{tab:status}
+\end{table}
+
+\section{Analysis}
+
+\begin{itemize}
+  \item \textbf{Objectives:} All six objectives have a working
+    implementation in the backend and frontend.
+  \item \textbf{Strengths:} Reproducible scoring and the grounding
+    validator address the two main weaknesses of existing tools, opacity
+    and fabrication.
+  \item \textbf{Challenges:} LLM output can be malformed or unavailable,
+    and resumes are untrusted text that may contain injected
+    instructions.
+  \item \textbf{Resolution:} Schema validation with a single repair
+    attempt, bounded retries, explicit \texttt{FAILED} states, and
+    wrapping of untrusted input.
+\end{itemize}
+
+% ===== CHAPTER 4: CONCLUSION =====
+
+\chapter{Conclusion}
+
+\section{Summary of Work}
+
+We designed and built CVATS, a full-stack system that guides a job seeker
+from resume and JD parsing through explainable scoring, gap analysis,
+grounded enhancement and mock interviews, with history and restorable
+results. The implementation meets the objectives set in Chapter~1 at the
+functional level.
+
+\section{Key Findings}
+
+\begin{itemize}
+  \item \textbf{Finding 1:} Keeping scoring deterministic and using the LLM
+    only as a verified assistant gives reproducible, explainable scores.
+  \item \textbf{Finding 2:} A post-generation grounding validator is
+    necessary to stop LLM rewrites from inventing credentials or figures.
+  \item \textbf{Finding 3:} Honest failure handling matters: reporting a
+    provider outage is preferable to returning fabricated output.
+\end{itemize}
+
+\section{Future Work and Recommendations}
+
+\begin{enumerate}
+  \item OCR support for image-only PDF resumes~\cite{prisma}
+  \item Calibrating scoring weights against labelled resume--JD pairs
+  \item Background job queue and caching for scalability
+  \item Browser extension or job-board integration to import JDs
+  \item Formal load testing and production monitoring
+\end{enumerate}
+
+\section{Final Remarks}
+
+Building CVATS showed that trustworthy AI assistance depends as much on
+validation, evidence and failure handling as on the model itself. The
+system gives job seekers a transparent way to understand and improve their
+fit for a role.
+
+% ===== BIBLIOGRAPHY =====
+
+% Print bibliography with heading in TOC
+\printbibliography[heading=bibintoc]
+
+\end{document}
